@@ -230,7 +230,7 @@ class ArtnetPollPacket {
     copyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.packet.setUint8(protVerLoIndex, protVer);
+    this.protVersion = protVer;
   }
 
   int get protVerHi => this.packet.getUint8(protVerHiIndex);
@@ -257,17 +257,17 @@ class ArtnetPollPacket {
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
     string += "Talk to me: 0x" + this.talkToMe.toRadixString(16) + "\n";
-    string += "*** VLC Transmission: " + (((this.talkToMe & vlcTransmissionMask) == 0) ? "Enabled" : "Disabled" + "\n");
-    string += "*** Diagnostics: " + (((this.talkToMe & diagnosticsEnableMask) == 0) ? "Enabled" : "Disabled" + "\n");
-    string += "*** Diagnostics are " + (((this.talkToMe & diagnosticsTransmissionMask) == 0) ? "broadcast" : "unicast" + "\n");
-    string += "*** Send Art Poll Reply: " + (((this.talkToMe & pollReplyOptionMask) == 0) ? "in response" : "on change" + "\n");
+    string += "*** VLC Transmission: " + (((this.talkToMe & vlcTransmissionMask) == 0) ? "Enabled" : "Disabled") + "\n";
+    string += "*** Diagnostics: " + (((this.talkToMe & diagnosticsEnableMask) == 0) ? "Enabled" : "Disabled") + "\n";
+    string += "*** Diagnostics are " + (((this.talkToMe & diagnosticsTransmissionMask) == 0) ? "broadcast" : "unicast") + "\n";
+    string += "*** Send art poll reply " + (((this.talkToMe & pollReplyOptionMask) == 0) ? "in response to art poll" : "on change") + "\n";
     string += "Priority: " + this.priority.toString() + "\n";
 
     return string;
   }
 
   String toHexString(){
-    String string = "***Artnet Data Packet***\n";
+    String string = "***Artnet Poll Packet***\n";
     String tempString = "";
     for(var i = 0; i < size; i++){
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();

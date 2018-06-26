@@ -15,7 +15,9 @@ void main() {
   });
 
   test('creates artnet poll packet', (){
-    print("TODO");
+    final packet1 = new ArtnetPollPacket();
+    print(packet1);
+    print(packet1.toHexString());
   });
 
   test('creates artnet poll reply packet', (){

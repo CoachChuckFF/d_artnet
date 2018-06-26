@@ -1,5 +1,5 @@
 name: d_artnet
-description: An Artnet packet builder
+description: An artnet packet builder
 version: 0.0.1
 author: Christian Krueger
 homepage:
