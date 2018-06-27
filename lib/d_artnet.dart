@@ -210,10 +210,16 @@ class ArtnetPollPacket {
   static const priorityIndex = talkToMeIndex + 1;
 
   /* Masks */
-  static const vlcTransmissionMask = 0x10;
-  static const diagnosticsTransmissionMask = 0x08;
-  static const diagnosticsEnableMask = 0x04;
-  static const pollReplyOptionMask = 0x02;
+  static const talkToMeVlcTransmissionEnableMask = 0x10;
+  static const talkToMeDiagnosticsTransmissionMask = 0x08;
+  static const talkToMeDiagnosticsEnableMask = 0x04;
+  static const talkToMePollReplyOptionMask = 0x02;
+
+  /* Options */
+  static const talkToMeDiagnosticsTransmissionOptionBroadcast = 0;
+  static const talkToMeDiagnosticsTransmissionOptionUnicast = 1;
+  static const talkToMePollReplyOptionOnlyInResponse = 0;
+  static const talkToMePollReplyOptionOnChange = 1;
 
   ByteData packet;
 
@@ -242,13 +248,26 @@ class ArtnetPollPacket {
   int get protVersion => this.packet.getUint16(protVerHiIndex);
   set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
 
-  set talkToMe(int value) => packet.setUint8(talkToMeIndex, value);
-  int get talkToMe => packet.getUint8(talkToMeIndex);
+  int get talkToMe => this.packet.getUint8(talkToMeIndex);
+  set talkToMe(int value) => this.packet.setUint8(talkToMeIndex, value);
 
-  set priority(int value) => packet.setUint8(priorityIndex, value);
-  int get priority => packet.getUint8(priorityIndex);
+  bool get talkToMeVlcTransmissionEnable => ((this.talkToMe & talkToMeVlcTransmissionEnableMask) == 0);
+  set talkToMeVlcTransmissionEnable(bool value) => (value) ? this.talkToMe &= ~talkToMeVlcTransmissionEnableMask : this.talkToMe |= talkToMeVlcTransmissionEnableMask;
 
-  List<int> get udpPacket => packet.buffer.asUint8List();
+  bool get talkToMeDiagnosticsEnable => ((this.talkToMe & talkToMeDiagnosticsEnableMask) != 0);
+  set talkToMeDiagnosticsEnable(bool value) => (value) ? this.talkToMe |= talkToMeDiagnosticsEnableMask : this.talkToMe &= ~talkToMeDiagnosticsEnableMask;
+
+  int get talkToMeDiagnosticsTransmission => (this.talkToMe & talkToMeDiagnosticsTransmissionMask) >> 3;
+  set talkToMeDiagnosticsTransmission(int value) => (value == talkToMeDiagnosticsTransmissionOptionUnicast) ? this.talkToMe |= talkToMeDiagnosticsTransmissionMask : this.talkToMe &= ~talkToMeDiagnosticsTransmissionMask;
+
+  int get talkToMePollReplyOption => (this.talkToMe & talkToMePollReplyOptionMask) >> 1;
+  set talkToMePollReplyOption(int value) => (value == talkToMePollReplyOptionOnChange) ? this.talkToMe |= talkToMePollReplyOptionMask : this.talkToMe &= ~talkToMePollReplyOptionMask;
+
+  int get priority => this.packet.getUint8(priorityIndex);
+  set priority(int value) => this.packet.setUint8(priorityIndex, value);
+
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
 
     @override
   String toString() {
@@ -257,10 +276,10 @@ class ArtnetPollPacket {
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
     string += "Talk to me: 0x" + this.talkToMe.toRadixString(16) + "\n";
-    string += "*** VLC Transmission: " + (((this.talkToMe & vlcTransmissionMask) == 0) ? "Enabled" : "Disabled") + "\n";
-    string += "*** Diagnostics: " + (((this.talkToMe & diagnosticsEnableMask) == 0) ? "Enabled" : "Disabled") + "\n";
-    string += "*** Diagnostics are " + (((this.talkToMe & diagnosticsTransmissionMask) == 0) ? "broadcast" : "unicast") + "\n";
-    string += "*** Send art poll reply " + (((this.talkToMe & pollReplyOptionMask) == 0) ? "in response to art poll" : "on change") + "\n";
+    string += "*** VLC Transmission: " + ((this.talkToMeVlcTransmissionEnable) ? "Enabled" : "Disabled") + "\n";
+    string += "*** Diagnostics: " + ((this.talkToMeDiagnosticsEnable) ? "Enabled" : "Disabled") + "\n";
+    string += "*** Diagnostics are " + ((this.talkToMeDiagnosticsTransmission == talkToMeDiagnosticsTransmissionOptionBroadcast) ? "broadcast" : "unicast") + "\n";
+    string += "*** Send art poll reply " + ((this.talkToMePollReplyOption == talkToMePollReplyOptionOnChange) ? "on config change" : "in response to art poll") + "\n";
     string += "Priority: " + this.priority.toString() + "\n";
 
     return string;
@@ -292,7 +311,7 @@ class ArtnetPollReplyPacket {
   static const nodeReportSize = 64;
   static const portTypesSize = 4;
   static const goodInputSize = 4;
-  static const goodOutpuSize = 4;
+  static const goodOutputSize = 4;
   static const swInSize = 4;
   static const swOutSize = 4;
   static const spareSize = 3;
@@ -320,7 +339,7 @@ class ArtnetPollReplyPacket {
   static const portTypesIndex = numPortsLoIndex + 1;
   static const goodInputIndex = portTypesIndex + portTypesSize;
   static const goodOutputIndex = goodInputIndex + goodInputSize;
-  static const swInIndex = goodOutputIndex + goodOutpuSize;
+  static const swInIndex = goodOutputIndex + goodOutputSize;
   static const swOutIndex = swInIndex + swInSize;
   static const swVideoIndex = swOutIndex + swOutSize;
   static const swMacroIndex = swVideoIndex + 1;
@@ -338,9 +357,53 @@ class ArtnetPollReplyPacket {
   static const status2Index = bindIndexIndex + 1;
   static const fillerIndex = status2Index + 1;
 
+  /* Bitmasks */
+  static const status1PollReplyOptionMask = 0xC0;
+  static const status1ProgrammingAuthorityMask = 0x30;
+  static const status1FirmwareBootMask = 0x04;
+  static const status1RdmCapableMask = 0x02;
+  static const status1UbeaPresentMask = 0x01;
+  static const portTypesOutputArtnetAbleMask = 0x80;
+  static const portTypesInputArtnetAbleMask = 0x40;
+  static const portTypesProtocolMask = 0x3F;
+  static const goodInputDataReceivedMask = 0x80;
+  static const goodInputIncludesTestPackets1Mask = 0x40;
+  static const goodInputIncludesSIPsMask = 0x20;
+  static const goodInputIncludesTestPackets2Mask = 0x10;
+  static const goodInputInputDisableMask = 0x08;
+  static const goodInputReceiveErrorDetectedMask = 0x04;
+  static const goodOutputDataTransmitingMask = 0x80;
+  static const goodOutputIncludesTestPackets1Mask = 0x40;
+  static const goodOutputIncludesSIPsMask = 0x20;
+  static const goodOutputIncludesTestPackets2Mask = 0x10;
+  static const goodOutputIsMergingMask = 0x08;
+  static const goodOutputShortDetectedMask = 0x04;
+  static const goodOutputMergeIsLTPMask = 0x04;
+  static const goodOutputProtocolMask = 0x04;
+  static const swMask = 0x0F;
+
+  /* Options */
+  static const status1PollReplyOptionOptionUnkown = 0x00;
+  static const status1PollReplyOptionOptionLocate = 0x01;
+  static const status1PollReplyOptionOptionMute = 0x02;
+  static const status1PollReplyOptionOptionNormal = 0x03;
+  static const status1ProgrammingAuthorityOptionUnknown = 0x00;
+  static const status1ProgrammingAuthorityOptionPanel = 0x01;
+  static const status1ProgrammingAuthorityOptionNetwork = 0x02;
+  static const status1FirmwareBootOptionNormal = 0x00;
+  static const status1FirmwareBootOptionRom = 0x01;
+  static const portTypesProtocolOptionDMX = 0x00;
+  static const portTypesProtocolOptionMidi = 0x01;
+  static const portTypesProtocolOptionAvab = 0x02;
+  static const portTypesProtocolOptionColortranCMX = 0x03;
+  static const portTypesProtocolOptionADB62_5 = 0x04;
+  static const portTypesProtocolOptionArtnet = 0x05;
+  static const goodOutputProtocolOptionArtnet = 0x00;
+  static const goodOutputProtocolOptionSacn = 0x01;
+
   ByteData packet;
 
-  ArtnetPollReplyPacket(List<int> packet){
+  ArtnetPollReplyPacket([List<int> packet]){
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
@@ -356,7 +419,11 @@ class ArtnetPollReplyPacket {
   List<int> get ip => this.packet.buffer.asUint8List(ipAddressIndex, ipAddressSize);
   set ip(List<int> ip){
     for(var i = 0; i < ipAddressSize; i++){
-      this.packet.setUint8(ipAddressIndex + i, ip[i]);
+      if(ip.length <= i){
+        this.packet.setUint8(ipAddressIndex + i, 0);    
+      } else {
+        this.packet.setUint8(ipAddressIndex + i, ip[i]);
+      }
     }
   }
 
@@ -381,10 +448,10 @@ class ArtnetPollReplyPacket {
   int get oemLo => this.packet.getUint8(oemIndex);
   set oemLo(int value) => this.packet.setUint8(oemIndex, value);
 
-  int get oem => this.packet.getUint8(oemHiIndex) << 8 | this.packet.getUint8(oemIndex);
+  int get oem => (this.oemHi << 8) &0xFF00 | this.oem & 0xFF;
   set oem(int value) {
-    this.packet.setUint8(oemHiIndex, (value >> 8) & 0xFF);
-    this.packet.setUint8(oemIndex, value & 0xFF);
+    this.oemHi = (value >> 8);  
+    this.oemLo = value & 0xFF;
   }
 
   int get ubeaVersion => this.packet.getUint8(ubeaVersionIndex);
@@ -393,7 +460,233 @@ class ArtnetPollReplyPacket {
   int get status1 => this.packet.getUint8(status1Index);
   set status1(int value) => this.packet.setUint8(status1Index, value);
 
+  int get status1PollReplyOption => (this.status1 & status1PollReplyOptionMask) >> 6;
+  set status1PollReplyOption(int value){
+    //clear value
+    this.status1 &= ~status1PollReplyOptionMask;
+    //set value
+    this.status1 |= ((value << 6) & status1PollReplyOptionMask);
+  }
 
+  int get status1ProgrammingAuthority => (this.status1 & status1ProgrammingAuthorityMask) >> 4;
+  set status1ProgrammingAuthority(int value){
+    //clear value
+    this.status1 &= ~status1ProgrammingAuthorityMask;
+    //set value
+    this.status1 |= ((value << 4) & status1ProgrammingAuthorityMask);
+  }
+
+  int get status1FirmwareBoot => (this.status1 & status1ProgrammingAuthorityMask) >> 2;
+  set status1FirmwareBoot(int value) => (value == status1FirmwareBootOptionRom) ? this.status1 |= status1FirmwareBootMask : this.status1 &= ~status1FirmwareBootMask;
+
+  bool get status1RdmCapable => ((this.status1 & status1RdmCapableMask) != 0);
+  set status1RdmCapable(bool value) => (value) ? this.status1 |= status1RdmCapableMask : this.status1 &= ~status1RdmCapableMask;
+  
+  bool get status1UbeaPresent => ((this.status1 & status1UbeaPresentMask) != 0);
+  set status1UbeaPresent(bool value) => (value) ? this.status1 |= status1UbeaPresentMask : this.status1 &= ~status1UbeaPresentMask;
+
+  int get estaManLo => this.packet.getUint8(estaManLoIndex);
+  set estaManLo(int value) => this.packet.setUint8(estaManLoIndex, value);
+
+  int get estaManHi => this.packet.getUint8(estaManHiIndex);
+  set estaManHi(int value) => this.packet.setUint8(estaManHiIndex, value);
+
+  int get estaMan => this.estaManHi << 8 | this.estaManLo;
+  set estaMan(int value){
+    this.estaManHi = value >> 8;
+    this.estaManLo = value & 0xFF;
+  }
+
+  String get shortName => this.packet.buffer.asUint8List(shortNameIndex, shortNameSize).toString();
+  set shortName(String value){
+    for(var i = 0; i < shortNameSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(shortNameIndex + i, 0);
+      } else {
+        this.packet.setInt8(shortNameIndex + i, value.codeUnitAt(i));
+      }
+    }
+    this.packet.setUint8(shortNameIndex + shortNameSize - 1, 0); //Null terminate just in case
+  }
+
+  String get longName => this.packet.buffer.asUint8List(longNameIndex, longNameSize).toString();
+  set longName(String value){
+    for(var i = 0; i < longNameSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(longNameIndex + i, 0);
+      } else {
+        this.packet.setInt8(longNameIndex + i, value.codeUnitAt(i));
+      }
+    }
+    this.packet.setUint8(longNameIndex + longNameSize - 1, 0); //Null terminate just in case
+  }
+
+  String get nodeReport => this.packet.buffer.asUint8List(nodeReportIndex, nodeReportSize).toString();
+  set nodeReport(String value){
+    for(var i = 0; i < nodeReportSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(nodeReportIndex + i, 0);
+      } else {
+        this.packet.setInt8(nodeReportIndex + i, value.codeUnitAt(i));
+      }
+    }
+    this.packet.setUint8(nodeReportIndex + nodeReportSize - 1, 0); //Null terminate just in case
+  }
+
+  int get numPortsHi => this.packet.getUint8(numPortsHiIndex);
+  set numPortsHi(int value) => this.packet.setUint8(numPortsHiIndex, value);
+
+  int get numPortsLo => this.packet.getUint8(numPortsLoIndex);
+  set numPortsLo(int value) => this.packet.setUint8(numPortsLoIndex, value);
+
+  int get numPorts => this.packet.getUint16(numPortsHiIndex);
+  set numPorts(int value) => this.packet.setUint16(numPortsHiIndex, value);
+
+  List<int> get portTypes => this.packet.buffer.asUint8List(portTypesIndex, portTypesSize);
+  void setPortType(int index, int value){
+    if(index >= portTypesSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(portTypesIndex + index, value);
+  }
+
+  bool getPortTypesOutputArtnetAble(int index) => (index >= portTypesSize) ? false : ((this.portTypes[index] & portTypesOutputArtnetAbleMask) != 0x00);
+  void setPortTypesOutputArtnetAble(int index, bool value){
+    if(index >= portTypesSize) return;
+
+    (value) ? this.portTypes[index] |= portTypesOutputArtnetAbleMask : this.portTypes[index] &= ~portTypesOutputArtnetAbleMask;
+  } 
+
+  bool getPortTypesInputArtnetAble(int index) => (index >= portTypesSize) ? false : ((this.portTypes[index] & portTypesInputArtnetAbleMask) != 0x00);
+  void setPortTypesInputArtnetAble(int index, bool value){
+    if(index >= portTypesSize) return;
+    
+    (value) ? this.portTypes[index] |= portTypesInputArtnetAbleMask : this.portTypes[index] &= ~portTypesInputArtnetAbleMask;
+  } 
+
+  int getPortTypesProtocol(int index) => (index >= portTypesSize) ? 0x00 : (this.portTypes[index] & portTypesProtocolMask);
+  void setPortTypesProtocol(int index, int value){
+    if(index >= portTypesSize) return;
+
+    //clear value
+    this.portTypes[index] &= ~portTypesProtocolMask;
+    //set value
+    this.portTypes[index] |= (value & portTypesProtocolMask);
+  }
+
+  List<int> get goodInput => this.packet.buffer.asUint8List(goodInputIndex, goodInputSize);
+  void setGoodInput(int index, int value){
+    if(index >= goodInputSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(goodInputIndex + index, value);
+  }
+
+  bool getGoodInputDataReceived(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputDataReceivedMask) != 0x00);
+  void setGoodInputDataReceived(int index, bool value){
+    if(index >= goodInputSize) return;
+
+    (value) ? this.goodInput[index] |= goodInputDataReceivedMask : this.goodInput[index] &= ~goodInputDataReceivedMask;
+  } 
+
+  bool getGoodInputIncludesTestPackets1(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesTestPackets1Mask) != 0x00);
+  void setGoodInputIncludesTestPackets1(int index, bool value){
+    if(index >= goodInputSize) return;
+
+    (value) ? this.goodInput[index] |= goodInputIncludesTestPackets1Mask : this.goodInput[index] &= ~goodInputIncludesTestPackets1Mask;
+  } 
+
+  bool getGoodInputIncludesSIPs(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesSIPsMask) != 0x00);
+  void setGoodInputIncludesSIPs(int index, bool value){
+    if(index >= goodInputSize) return;
+
+    (value) ? this.goodInput[index] |= goodInputIncludesSIPsMask : this.goodInput[index] &= ~goodInputIncludesSIPsMask;
+  } 
+
+  bool getGoodInputIncludesTestPackets2(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesTestPackets2Mask) != 0x00);
+  void setGoodInputIncludesTestPackets2(int index, bool value){
+    if(index >= goodInputSize) return;
+
+    (value) ? this.goodInput[index] |= goodInputIncludesTestPackets2Mask : this.goodInput[index] &= ~goodInputIncludesTestPackets2Mask;
+  } 
+
+  bool getGoodInputInputDisable(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputInputDisableMask) != 0x00);
+  void setGoodInputInputDisable(int index, bool value){
+    if(index >= goodInputSize) return;
+
+    (value) ? this.goodInput[index] |= goodInputInputDisableMask : this.goodInput[index] &= ~goodInputInputDisableMask;
+  } 
+
+  bool getGoodInputReceiveErrorDetected(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputReceiveErrorDetectedMask) != 0x00);
+  void setGoodInputReceiveErrorDetected(int index, bool value){
+    if(index >= goodInputSize) return;
+
+    (value) ? this.goodInput[index] |= goodInputReceiveErrorDetectedMask : this.goodInput[index] &= ~goodInputReceiveErrorDetectedMask;
+  } 
+
+  List<int> get goodOutput => this.packet.buffer.asUint8List(goodOutputIndex, goodOutputSize);
+  void setGoodOutput(int index, int value){
+    if(index >= goodOutputSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(goodOutputIndex + index, value);
+  }
+
+  bool getGoodOutputDataTransmiting(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputDataTransmitingMask) != 0x00);
+  void setGoodOutputDataTransmiting(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputDataTransmitingMask : this.goodOutput[index] &= ~goodOutputDataTransmitingMask;
+  } 
+
+  bool getGoodOutputIncludesTestPackets1(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesTestPackets1Mask) != 0x00);
+  void setGoodOutputIncludesTestPackets1(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputIncludesTestPackets1Mask : this.goodOutput[index] &= ~goodOutputIncludesTestPackets1Mask;
+  } 
+
+  bool getGoodOutputIncludesSIPs(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesSIPsMask) != 0x00);
+  void setGoodOutputIncludesSIPs(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputIncludesSIPsMask : this.goodOutput[index] &= ~goodOutputIncludesSIPsMask;
+  } 
+
+  bool getGoodOutputIncludesTestPackets2(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesTestPackets2Mask) != 0x00);
+  void setGoodOutputIncludesTestPackets2(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputIncludesTestPackets2Mask : this.goodOutput[index] &= ~goodOutputIncludesTestPackets2Mask;
+  } 
+
+  bool getGoodOutputIsMerging(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIsMergingMask) != 0x00);
+  void setGoodOutputIsMerging(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputIsMergingMask : this.goodOutput[index] &= ~goodOutputIsMergingMask;
+  } 
+
+  bool getGoodOutputShortDetected(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputShortDetectedMask) != 0x00);
+  void setGoodOutputShortDetected(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputShortDetectedMask : this.goodOutput[index] &= ~goodOutputShortDetectedMask;
+  } 
+
+  bool getGoodOutputMergeIsLTPDetected(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputMergeIsLTPMask) != 0x00);
+  void setGoodOutputMergeIsLTPDetected(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputMergeIsLTPMask : this.goodOutput[index] &= ~goodOutputMergeIsLTPMask;
+  } 
+
+  /* TODO make this an int */
+  bool getGoodOutputProtocol(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputProtocolMask) != 0x00);
+  void setGoodOutputProtocol(int index, bool value){
+    if(index >= goodOutputSize) return;
+
+    (value) ? this.goodOutput[index] |= goodOutputProtocolMask : this.goodOutput[index] &= ~goodOutputProtocolMask;
+  } 
 
 }
-
