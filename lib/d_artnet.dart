@@ -355,6 +355,9 @@ class ArtnetPollReplyPacket {
   static const fillerIndex = status2Index + 1;
 
   /* Bitmasks */
+  static const netSwitchMask = 0x7F;
+  static const subSwitchMask = 0x0F;
+  static const ioSwitchMask = 0x0F;
   static const status1IndicatorStateMask = 0xC0;
   static const status1ProgrammingAuthorityMask = 0x30;
   static const status1FirmwareBootMask = 0x04;
@@ -377,7 +380,6 @@ class ArtnetPollReplyPacket {
   static const goodOutputShortDetectedMask = 0x04;
   static const goodOutputMergeIsLTPMask = 0x04;
   static const goodOutputProtocolMask = 0x04;
-  static const swMask = 0x0F;
   static const status2IsSquawkingMask = 0x20;
   static const status2ProtocolSwitchableMask = 0x10;
   static const status215BitSupportMask = 0x08;
@@ -440,10 +442,17 @@ class ArtnetPollReplyPacket {
   set versionInfoL(int value) => this.packet.setUint8(versInfoLIndex, value);
 
   int get netSwitch => this.packet.getUint8(netSwitchIndex);
-  set netSwitch(int value) => this.packet.setUint8(netSwitchIndex, value);
+  set netSwitch(int value) => this.packet.setUint8(netSwitchIndex, value & netSwitchMask);
 
   int get subSwitch => this.packet.getUint8(subSwitchIndex);
-  set subSwitch(int value) => this.packet.setUint8(subSwitchIndex, value);
+  set subSwitch(int value) => this.packet.setUint8(subSwitchIndex, value & subSwitchMask);
+
+  int get universe => this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0];
+  set unitverse(int value){
+    this.netSwitch = (value >> 16);
+    this.subSwitch = (value >> 8);
+    this.swOut[0] = (value >> 16);
+  }
 
   int get oemHi => this.packet.getUint8(oemHiIndex);
   set oemHi(int value) => this.packet.setUint8(oemHiIndex, value);
@@ -697,7 +706,7 @@ class ArtnetPollReplyPacket {
     if(index >= swInSize || index < 0){
       return;
     }
-    this.packet.setUint8(swInIndex + index, value & swMask);
+    this.packet.setUint8(swInIndex + index, value & ioSwitchMask);
   }
 
   List<int> get swOut => this.packet.buffer.asUint8List(swOutIndex, swOutSize);
@@ -705,7 +714,7 @@ class ArtnetPollReplyPacket {
     if(index >= swOutSize || index < 0){
       return;
     }
-    this.packet.setUint8(swOutIndex + index, value & swMask);
+    this.packet.setUint8(swOutIndex + index, value & ioSwitchMask);
   }
 
   int get swVideo => this.packet.getUint8(swVideoIndex);
@@ -794,7 +803,7 @@ class ArtnetPollReplyPacket {
     string += "Ip Address: " + this.ip[0].toString() + "." + this.ip[1].toString() + "." + this.ip[2].toString() + "." + this.ip[3].toString() + "\n";
     string += "Port: " + this.port.toString() + "\n";
     string += "Version: " + this.versionInfoH.toString() + "." + this.versionInfoL.toString() + "\n";
-    string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[1]).toString() + "\n";
+    string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() + "\n";
     string += "*** Net Switch: " + this.netSwitch.toString() + "\n";
     string += "*** Sub Switch: " + this.subSwitch.toString() + "\n";
     string += "*** Input Switch:\n";
@@ -888,6 +897,266 @@ class ArtnetPollReplyPacket {
     string += "*** Node Supports DHCP: " + ((this.status2DHCPCapable) ? "True" : "False") + "\n";
     string += "*** Node's ip is set " + ((this.status2IpIsSetManually) ? "manually" : "by DHCP") + "\n";
     string += "*** Node Supports Web Configurations: " + ((this.status2HasWebConfigurationSupport) ? "True" : "False") + "\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetAddressPacket {
+  static const size = 107;
+  static const opCode = 0x6000;
+
+  /* Sizes */
+  static const shortNameSize = 18;
+  static const longNameSize = 64;
+  static const swInSize = 4;
+  static const swOutSize = 4;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const netSwitchIndex = protVerLoIndex + 1;
+  static const bindIndexIndex = netSwitchIndex + 1;
+  static const shortNameIndex = bindIndexIndex + 1;
+  static const longNameIndex = shortNameIndex + shortNameSize;
+  static const swInIndex = longNameIndex + longNameSize;
+  static const swOutIndex = swInIndex + swInSize;
+  static const subSwitchIndex = swOutIndex + swOutSize;
+  static const swVideoIndex = subSwitchIndex + 1;
+  static const commandIndex = swVideoIndex + 1;
+
+  /* Masks */
+  static const programSwitchMask = 0x80;
+  static const netSwitchMask = 0x7F;
+  static const subSwitchMask = 0x0F;
+  static const ioSwitchMask = 0x0F;
+
+  /* Options */
+  static const commandOptionNone = 0x00;
+  static const commandOptionCancelMerge = 0x01;
+  static const commandOptionLedNormal = 0x02;
+  static const commandOptionLedMute = 0x03;
+  static const commandOptionLedLocate = 0x04;
+  static const commandOptionResetRxFlags = 0x05;
+  static const commandOptionMergeLtp0 = 0x10;
+  static const commandOptionMergeLtp1 = 0x11;
+  static const commandOptionMergeLtp2 = 0x12;
+  static const commandOptionMergeLtp3 = 0x13;
+  static const commandOptionMergeHtp0 = 0x50;
+  static const commandOptionMergeHtp1 = 0x51;
+  static const commandOptionMergeHtp2 = 0x52;
+  static const commandOptionMergeHtp3 = 0x53;
+  static const commandOptionArtNetSel0 = 0x60;
+  static const commandOptionArtNetSel1 = 0x61;
+  static const commandOptionArtNetSel2 = 0x62;
+  static const commandOptionArtNetSel3 = 0x63;
+  static const commandOptionAcnSel0 = 0x70;
+  static const commandOptionAcnSel1 = 0x71;
+  static const commandOptionAcnSel2 = 0x72;
+  static const commandOptionAcnSel3 = 0x73;
+  static const commandOptionClearOp0 = 0x90;
+  static const commandOptionClearOp1 = 0x91;
+  static const commandOptionClearOp2 = 0x92;
+  static const commandOptionClearOp3 = 0x93;
+
+
+  ByteData packet;
+
+  ArtnetAddressPacket([List<int> packet]){
+    this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  int get netSwitch => this.packet.getUint8(netSwitchIndex);
+  set netSwitch(int value) => this.packet.setUint8(netSwitchIndex, value);
+
+  bool get programNetSwitchEnable => (this.netSwitch & programSwitchMask) != 0x00;
+  set programNetSwitchEnable(bool value) => (value) ? this.netSwitch |= programSwitchMask : this.netSwitch &= ~programSwitchMask; 
+
+  int get subSwitch => this.packet.getUint8(subSwitchIndex);
+  set subSwitch(int value) => this.packet.setUint8(subSwitchIndex, value);
+
+  bool get programSubSwitchEnable => (this.subSwitch & programSwitchMask) != 0x00;
+  set programSubSwitchEnable(bool value) => (value) ? this.subSwitch |= programSwitchMask : this.subSwitch &= ~programSwitchMask; 
+
+  List<int> get swIn => this.packet.buffer.asUint8List(swInIndex, swInSize);
+  void setSwIn(int index, int value){
+    if(index >= swInSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(swInIndex + index, value & ioSwitchMask);
+  }
+
+  bool getProgramSwInEnable(int index){
+    if(index >= swInSize || index < 0){
+      return false;
+    }
+
+    return ((this.swIn[index] & programSwitchMask) != 0x00);
+  }
+  void setProgramSwInEnable(int index, bool value){
+    if(index >= swInSize || index < 0){
+      return;
+    }
+
+    (value) ? this.swIn[index] |= programSwitchMask : this.swIn[index] &= ~programSwitchMask;
+  }
+
+  List<int> get swOut => this.packet.buffer.asUint8List(swOutIndex, swOutSize);
+  void setSwOut(int index, int value){
+    if(index >= swInSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(swOutIndex + index, value & ioSwitchMask);
+  }
+
+  bool getProgramSwOutEnable(int index){
+    if(index >= swOutSize || index < 0){
+      return false;
+    }
+
+    return ((this.swOut[index] & programSwitchMask) != 0x00);
+  }
+  void setProgramSwOutEnable(int index, bool value){
+    if(index >= swOutSize || index < 0){
+      return;
+    }
+
+    (value) ? this.swOut[index] |= programSwitchMask : this.swOut[index] &= ~programSwitchMask;
+  }
+
+
+  int get universe => (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]);
+  set universe(int value){
+    this.netSwitch = value >> 16 & netSwitchMask;
+    this.subSwitch = value >> 8 & subSwitchMask;
+    this.swOut[0] = value & ioSwitchMask;
+  }
+
+  bool get programUniverseEnable => (this.programNetSwitchEnable || this.programSubSwitchEnable || this.getProgramSwOutEnable(0));
+  set programUniverseEnable(bool value){
+    this.programNetSwitchEnable = value;
+    this.programSubSwitchEnable = value;
+    this.setProgramSwOutEnable(0, value);
+  }
+
+  String get shortName => String.fromCharCodes(this.packet.buffer.asUint8List(shortNameIndex, shortNameSize));
+  set shortName(String value){
+    for(var i = 0; i < shortNameSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(shortNameIndex + i, 0);
+      } else {
+        this.packet.setInt8(shortNameIndex + i, value.codeUnitAt(i));
+      }
+    }
+    this.packet.setUint8(shortNameIndex + shortNameSize - 1, 0); //Null terminate just in case
+  }
+
+  String get longName => String.fromCharCodes(this.packet.buffer.asUint8List(longNameIndex, longNameSize));
+  set longName(String value){
+    for(var i = 0; i < longNameSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(longNameIndex + i, 0);
+      } else {
+        this.packet.setInt8(longNameIndex + i, value.codeUnitAt(i));
+      }
+    }
+    this.packet.setUint8(longNameIndex + longNameSize - 1, 0); //Null terminate just in case
+  }
+
+  int get swVideo => this.packet.getUint8(swVideoIndex);
+  set swVideo(int value) => this.packet.setUint8(swVideoIndex, value);
+
+  int get command => this.packet.getUint8(commandIndex);
+  set command(int value) => this.packet.setUint8(commandIndex, value);
+
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Address Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() + " " + ((this.programUniverseEnable) ? "Set to Program" : "") + "\n";
+    string += "*** Net Switch: " + (this.netSwitch & netSwitchMask).toString() + " " + ((this.programNetSwitchEnable) ? "Set to Program" : "") + "\n";
+    string += "*** Sub Switch: " + (this.netSwitch & subSwitchMask).toString() + " " + ((this.programSubSwitchEnable) ? "Set to Program" : "") + "\n";
+    string += "*** Input Switch:\n";
+    string += "*** *** 0: " + (this.swIn[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(0)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 1: " + (this.swIn[1] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(1)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 2: " + (this.swIn[2] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(2)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 3: " + (this.swIn[3] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(3)) ? "Set to Program" : "") + "\n";
+    string += "*** Output Switch:\n";
+    string += "*** *** 0: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(0)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 1: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(1)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 2: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(2)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 3: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(3)) ? "Set to Program" : "") + "\n";
+    string += "Short Name: " + this.shortName + "\n";
+    string += "Long Name: " + this.longName + "\n";
+    string += "Video Switch: " + this.swVideo.toString() + "\n";
+    string += "Command: ";
+    switch(this.command){
+      case commandOptionNone: string += "No Command\n"; break;
+      case commandOptionCancelMerge: string += "Cancel Merge\n"; break;
+      case commandOptionLedNormal: string += "Set Indicator Mode to Normal\n"; break;
+      case commandOptionLedMute: string += "Set Indicator Mode to Mute\n"; break;
+      case commandOptionLedLocate: string += "Set Indicator Mode to Locate\n"; break;
+      case commandOptionResetRxFlags: string += "Reset Rx Flags\n"; break;
+      case commandOptionMergeLtp0: string += "Set Port 0 to Merge LTP Mode\n"; break;
+      case commandOptionMergeLtp1: string += "Set Port 1 to Merge LTP Mode\n"; break;
+      case commandOptionMergeLtp2: string += "Set Port 2 to Merge LTP Mode\n"; break;
+      case commandOptionMergeLtp3: string += "Set Port 3 to Merge LTP Mode\n"; break;
+      case commandOptionMergeHtp0: string += "Set Port 0 to Merge HTP Mode\n"; break;
+      case commandOptionMergeHtp1: string += "Set Port 1 to Merge HTP Mode\n"; break;
+      case commandOptionMergeHtp2: string += "Set Port 2 to Merge HTP Mode\n"; break;
+      case commandOptionMergeHtp3: string += "Set Port 3 to Merge HTP Mode\n"; break;
+      case commandOptionArtNetSel0: string += "Set Port 0 to Output DMX and RDM from Art-Net\n"; break;
+      case commandOptionArtNetSel1: string += "Set Port 1 to Output DMX and RDM from Art-Net\n"; break;
+      case commandOptionArtNetSel2: string += "Set Port 2 to Output DMX and RDM from Art-Net\n"; break;
+      case commandOptionArtNetSel3: string += "Set Port 3 to Output DMX and RDM from Art-Net\n"; break;
+      case commandOptionAcnSel0: string += "Set Port 0 to Output DMX from sACN and RDM from Art-Net\n"; break;
+      case commandOptionAcnSel1: string += "Set Port 1 to Output DMX from sACN and RDM from Art-Net\n"; break;
+      case commandOptionAcnSel2: string += "Set Port 2 to Output DMX from sACN and RDM from Art-Net\n"; break;
+      case commandOptionAcnSel3: string += "Set Port 3 to Output DMX from sACN and RDM from Art-Net\n"; break;
+      case commandOptionClearOp0: string += "Blackout Port 0 DMX Buffer\n"; break;
+      case commandOptionClearOp1: string += "Blackout Port 1 DMX Buffer\n"; break;
+      case commandOptionClearOp2: string += "Blackout Port 2 DMX Buffer\n"; break;
+      case commandOptionClearOp3: string += "Blackout Port 3 DMX Buffer\n"; break;
+      case 0x6969: string += "SOC was here\n"; break;
+      default: string += "Invalid Command\n"; break;
+    }
     return string;
   }
 
