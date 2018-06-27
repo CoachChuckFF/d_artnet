@@ -186,14 +186,13 @@ class ArtnetDataPacket {
   }
 
   String toHexString(){
-    String string = "***Artnet Data Packet***\n";
+    String string = "";
     String tempString = "";
     for(var i = 0; i < this.udpPacket.length; i++){
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
       if(tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
-    string += "\n**********************\n";
     return string;
   }
 
@@ -266,10 +265,9 @@ class ArtnetPollPacket {
   int get priority => this.packet.getUint8(priorityIndex);
   set priority(int value) => this.packet.setUint8(priorityIndex, value);
 
-
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
-    @override
+  @override
   String toString() {
     String string = "***Artnet Poll Packet***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
@@ -286,14 +284,13 @@ class ArtnetPollPacket {
   }
 
   String toHexString(){
-    String string = "***Artnet Poll Packet***\n";
+    String string = "";
     String tempString = "";
     for(var i = 0; i < size; i++){
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
       if(tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
-    string += "\n**********************\n";
     return string;
   }
 
@@ -343,8 +340,8 @@ class ArtnetPollReplyPacket {
   static const swOutIndex = swInIndex + swInSize;
   static const swVideoIndex = swOutIndex + swOutSize;
   static const swMacroIndex = swVideoIndex + 1;
-  static const swRemote = swMacroIndex + 1;
-  static const spareIndex = swRemote + 1;
+  static const swRemoteIndex = swMacroIndex + 1;
+  static const spareIndex = swRemoteIndex + 1;
   static const styleIndex = spareIndex + spareSize;
   static const macHiIndex = styleIndex + 1;
   static const mac4Index = macHiIndex + 1;
@@ -358,7 +355,7 @@ class ArtnetPollReplyPacket {
   static const fillerIndex = status2Index + 1;
 
   /* Bitmasks */
-  static const status1PollReplyOptionMask = 0xC0;
+  static const status1IndicatorStateMask = 0xC0;
   static const status1ProgrammingAuthorityMask = 0x30;
   static const status1FirmwareBootMask = 0x04;
   static const status1RdmCapableMask = 0x02;
@@ -381,12 +378,18 @@ class ArtnetPollReplyPacket {
   static const goodOutputMergeIsLTPMask = 0x04;
   static const goodOutputProtocolMask = 0x04;
   static const swMask = 0x0F;
+  static const status2IsSquawkingMask = 0x20;
+  static const status2ProtocolSwitchableMask = 0x10;
+  static const status215BitSupportMask = 0x08;
+  static const status2DHCPCapableMask = 0x04;
+  static const status2IpIsSetManuallyMask = 0x02;
+  static const status2HasWebConfigurationSupportMask = 0x01;
 
   /* Options */
-  static const status1PollReplyOptionOptionUnkown = 0x00;
-  static const status1PollReplyOptionOptionLocate = 0x01;
-  static const status1PollReplyOptionOptionMute = 0x02;
-  static const status1PollReplyOptionOptionNormal = 0x03;
+  static const status1IndicatorStateOptionUnkown = 0x00;
+  static const status1IndicatorStateOptionLocate = 0x01;
+  static const status1IndicatorStateOptionMute = 0x02;
+  static const status1IndicatorStateOptionNormal = 0x03;
   static const status1ProgrammingAuthorityOptionUnknown = 0x00;
   static const status1ProgrammingAuthorityOptionPanel = 0x01;
   static const status1ProgrammingAuthorityOptionNetwork = 0x02;
@@ -417,12 +420,12 @@ class ArtnetPollReplyPacket {
   }
 
   List<int> get ip => this.packet.buffer.asUint8List(ipAddressIndex, ipAddressSize);
-  set ip(List<int> ip){
+  set ip(List<int> value){
     for(var i = 0; i < ipAddressSize; i++){
-      if(ip.length <= i){
+      if(value.length <= i){
         this.packet.setUint8(ipAddressIndex + i, 0);    
       } else {
-        this.packet.setUint8(ipAddressIndex + i, ip[i]);
+        this.packet.setUint8(ipAddressIndex + i, value[i]);
       }
     }
   }
@@ -448,7 +451,7 @@ class ArtnetPollReplyPacket {
   int get oemLo => this.packet.getUint8(oemIndex);
   set oemLo(int value) => this.packet.setUint8(oemIndex, value);
 
-  int get oem => (this.oemHi << 8) &0xFF00 | this.oem & 0xFF;
+  int get oem => (this.oemHi << 8) & 0xFF00 | this.oemLo & 0xFF;
   set oem(int value) {
     this.oemHi = (value >> 8);  
     this.oemLo = value & 0xFF;
@@ -460,12 +463,12 @@ class ArtnetPollReplyPacket {
   int get status1 => this.packet.getUint8(status1Index);
   set status1(int value) => this.packet.setUint8(status1Index, value);
 
-  int get status1PollReplyOption => (this.status1 & status1PollReplyOptionMask) >> 6;
-  set status1PollReplyOption(int value){
+  int get status1IndicatorState => (this.status1 & status1IndicatorStateMask) >> 6;
+  set status1IndicatorState(int value){
     //clear value
-    this.status1 &= ~status1PollReplyOptionMask;
+    this.status1 &= ~status1IndicatorStateMask;
     //set value
-    this.status1 |= ((value << 6) & status1PollReplyOptionMask);
+    this.status1 |= ((value << 6) & status1IndicatorStateMask);
   }
 
   int get status1ProgrammingAuthority => (this.status1 & status1ProgrammingAuthorityMask) >> 4;
@@ -497,7 +500,7 @@ class ArtnetPollReplyPacket {
     this.estaManLo = value & 0xFF;
   }
 
-  String get shortName => this.packet.buffer.asUint8List(shortNameIndex, shortNameSize).toString();
+  String get shortName => String.fromCharCodes(this.packet.buffer.asUint8List(shortNameIndex, shortNameSize));
   set shortName(String value){
     for(var i = 0; i < shortNameSize; i++){
       if(value.length <= i){
@@ -509,7 +512,7 @@ class ArtnetPollReplyPacket {
     this.packet.setUint8(shortNameIndex + shortNameSize - 1, 0); //Null terminate just in case
   }
 
-  String get longName => this.packet.buffer.asUint8List(longNameIndex, longNameSize).toString();
+  String get longName => String.fromCharCodes(this.packet.buffer.asUint8List(longNameIndex, longNameSize));
   set longName(String value){
     for(var i = 0; i < longNameSize; i++){
       if(value.length <= i){
@@ -521,7 +524,7 @@ class ArtnetPollReplyPacket {
     this.packet.setUint8(longNameIndex + longNameSize - 1, 0); //Null terminate just in case
   }
 
-  String get nodeReport => this.packet.buffer.asUint8List(nodeReportIndex, nodeReportSize).toString();
+  String get nodeReport => String.fromCharCodes(packet.buffer.asUint8List(nodeReportIndex, nodeReportSize));
   set nodeReport(String value){
     for(var i = 0; i < nodeReportSize; i++){
       if(value.length <= i){
@@ -674,19 +677,229 @@ class ArtnetPollReplyPacket {
     (value) ? this.goodOutput[index] |= goodOutputShortDetectedMask : this.goodOutput[index] &= ~goodOutputShortDetectedMask;
   } 
 
-  bool getGoodOutputMergeIsLTPDetected(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputMergeIsLTPMask) != 0x00);
-  void setGoodOutputMergeIsLTPDetected(int index, bool value){
+  bool getGoodOutputMergeIsLTP(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputMergeIsLTPMask) != 0x00);
+  void setGoodOutputMergeIsLTP(int index, bool value){
     if(index >= goodOutputSize) return;
 
     (value) ? this.goodOutput[index] |= goodOutputMergeIsLTPMask : this.goodOutput[index] &= ~goodOutputMergeIsLTPMask;
   } 
 
   /* TODO make this an int */
-  bool getGoodOutputProtocol(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputProtocolMask) != 0x00);
-  void setGoodOutputProtocol(int index, bool value){
+  int getGoodOutputProtocol(int index) => (index >= goodOutputSize) ? 0x00 : (this.goodOutput[index] & goodOutputProtocolMask);
+  void setGoodOutputProtocol(int index, int value){
     if(index >= goodOutputSize) return;
 
-    (value) ? this.goodOutput[index] |= goodOutputProtocolMask : this.goodOutput[index] &= ~goodOutputProtocolMask;
+    (value == goodOutputProtocolOptionSacn) ? this.goodOutput[index] |= goodOutputProtocolMask : this.goodOutput[index] &= ~goodOutputProtocolMask;
   } 
+
+  List<int> get swIn => this.packet.buffer.asUint8List(swInIndex, swInSize);
+  void setSwIn(int index, int value){
+    if(index >= swInSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(swInIndex + index, value & swMask);
+  }
+
+  List<int> get swOut => this.packet.buffer.asUint8List(swOutIndex, swOutSize);
+  void setSwOut(int index, int value){
+    if(index >= swOutSize || index < 0){
+      return;
+    }
+    this.packet.setUint8(swOutIndex + index, value & swMask);
+  }
+
+  int get swVideo => this.packet.getUint8(swVideoIndex);
+  set swVideo(int value) => this.packet.setUint8(swVideoIndex, value);
+
+  int get swMacro => this.packet.getUint8(swMacroIndex);
+  set swMacro(int value) => this.packet.setUint8(swMacroIndex, value);
+
+  int get swRemote => this.packet.getUint8(swRemoteIndex);
+  set swRemote(int value) => this.packet.setUint8(swRemoteIndex, value);
+
+  int get style => this.packet.getUint8(styleIndex);
+  set style(int value) => this.packet.setUint8(styleIndex, value);
+
+  int get macHi => this.packet.getUint8(macHiIndex);
+  set macHi(int value) => this.packet.setUint8(macHiIndex, value);
+
+  int get mac4 => this.packet.getUint8(mac4Index);
+  set mac4(int value) => this.packet.setUint8(mac4Index, value);
+
+  int get mac3 => this.packet.getUint8(mac3Index);
+  set mac3(int value) => this.packet.setUint8(mac3Index, value);
+
+  int get mac2 => this.packet.getUint8(mac2Index);
+  set mac2(int value) => this.packet.setUint8(mac2Index, value);
+
+  int get mac1 => this.packet.getUint8(mac1Index);
+  set mac1(int value) => this.packet.setUint8(mac1Index, value);
+
+  int get macLo => this.packet.getUint8(macLoIndex);
+  set macLo(int value) => this.packet.setUint8(macLoIndex, value);
+
+  List<int> get mac => this.packet.buffer.asUint8List(macHiIndex, 6);
+  set mac(List<int> value){
+    for(var i = 0; i < 6; i++){
+      if(value.length <= i){
+        this.packet.setUint8(macHiIndex + i, 0);    
+      } else {
+        this.packet.setUint8(macHiIndex + i, value[i]);
+      }
+    }
+  }
+
+  List<int> get bindIp => this.packet.buffer.asUint8List(bindIpIndex, bindIpSize);
+  set bindIp(List<int> value){
+    for(var i = 0; i < bindIpSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(bindIpIndex + i, 0);    
+      } else {
+        this.packet.setUint8(bindIpIndex + i, value[i]);
+      }
+    }
+  }
+
+  int get bindIndex => this.packet.getUint8(bindIndexIndex);
+  set bindIndex(int value) => this.packet.setUint8(bindIndexIndex, value);
+
+  int get status2 => this.packet.getUint8(status2Index);
+  set status2(int value) => this.packet.setUint8(status2Index, value);
+
+  bool get status2IsSquawking => ((this.status2 & status2IsSquawkingMask) != 0x00);
+  set status2IsSquawking(bool value) => (value) ? this.status2 |= status2IsSquawkingMask : this.status2 &= ~status2IsSquawkingMask;
+
+  bool get status2ProtocolSwitchable => ((this.status2 & status2ProtocolSwitchableMask) != 0x00);
+  set status2ProtocolSwitchable(bool value) => (value) ? this.status2 |= status2ProtocolSwitchableMask : this.status2 &= ~status2ProtocolSwitchableMask;
+
+  bool get status215BitSupport => ((this.status2 & status215BitSupportMask) != 0x00);
+  set status215BitSupport(bool value) => (value) ? this.status2 |= status215BitSupportMask : this.status2 &= ~status215BitSupportMask;
+
+  bool get status2DHCPCapable => ((this.status2 & status2DHCPCapableMask) != 0x00);
+  set status2DHCPCapable(bool value) => (value) ? this.status2 |= status2DHCPCapableMask : this.status2 &= ~status2DHCPCapableMask;
+
+  bool get status2IpIsSetManually => ((this.status2 & status2IpIsSetManuallyMask) == 0x00);
+  set status2IpIsSetManually(bool value) => (value) ? this.status2 &= ~status2IpIsSetManuallyMask : this.status2 |= status2IpIsSetManuallyMask;
+
+  bool get status2HasWebConfigurationSupport => ((this.status2 & status2HasWebConfigurationSupportMask) != 0x00);
+  set status2HasWebConfigurationSupport(bool value) => (value) ? this.status2 |= status2HasWebConfigurationSupportMask : this.status2 &= ~status2HasWebConfigurationSupportMask;
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Poll Reply Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Ip Address: " + this.ip[0].toString() + "." + this.ip[1].toString() + "." + this.ip[2].toString() + "." + this.ip[3].toString() + "\n";
+    string += "Port: " + this.port.toString() + "\n";
+    string += "Version: " + this.versionInfoH.toString() + "." + this.versionInfoL.toString() + "\n";
+    string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[1]).toString() + "\n";
+    string += "*** Net Switch: " + this.netSwitch.toString() + "\n";
+    string += "*** Sub Switch: " + this.subSwitch.toString() + "\n";
+    string += "*** Input Switch:\n";
+    string += "*** *** 0: " + this.swIn[0].toString() + "\n";
+    string += "*** *** 1: " + this.swIn[1].toString() + "\n";
+    string += "*** *** 2: " + this.swIn[2].toString() + "\n";
+    string += "*** *** 3: " + this.swIn[3].toString() + "\n";
+    string += "*** Output Switch:\n";
+    string += "*** *** 0: " + this.swOut[0].toString() + "\n";
+    string += "*** *** 1: " + this.swOut[1].toString() + "\n";
+    string += "*** *** 2: " + this.swOut[2].toString() + "\n";
+    string += "*** *** 3: " + this.swOut[3].toString() + "\n";
+    string += "Oem: 0x" + this.oem.toRadixString(16) + "\n";
+    string += "Ubea Version: " + this.ubeaVersion.toString() + "\n";
+    string += "Status 1: 0x" + this.status1.toRadixString(16) + "\n";
+    string += "*** Indicator State: ";
+    switch(this.status1IndicatorState){
+      case status1IndicatorStateOptionLocate: string += "Locate Mode\n"; break;
+      case status1IndicatorStateOptionMute: string += "Mute Mode\n"; break;
+      case status1IndicatorStateOptionNormal: string += "Normal Mode\n"; break;
+      default: string += "Unkown Mode\n"; break;
+    }
+    string += "*** Programming Authority: ";
+    switch(this.status1ProgrammingAuthority){
+      case status1ProgrammingAuthorityOptionNetwork: string += "All or part of Port-Address programmed by network or web browser\n"; break;
+      case status1ProgrammingAuthorityOptionPanel: string += "All Port-Address set by front panel controls.\n"; break;
+      default: string += "Port-Address programming authority unknown\n"; break;
+    }
+    string += "*** Firmware Boot: " + ((this.status1FirmwareBoot == status1FirmwareBootOptionRom) ? "ROM boot" : "Normal boot (from flash)") + "\n";
+    string += "*** RDM Capable: " + ((this.status1RdmCapable) ? "Capable" : "Not Capable") + "\n";
+    string += "*** UBEA Present: " + ((this.status1UbeaPresent) ? "Present" : "Not Present or Currupt") + "\n";
+    string += "Esta Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
+    string += "Short Name: " + this.shortName + "\n";
+    string += "Long Name: " + this.longName + "\n";
+    string += "Node Report: " + this.nodeReport + "\n";
+    string += "Number of Ports: " + this.numPorts.toString() + "\n";
+    string += "Port Types:\n";
+    for(var i = 0; i < portTypesSize; i++){
+      string += "*** " + i.toString() + ":\n";
+      string += "*** *** Artnet Output: " + ((this.getPortTypesInputArtnetAble(i)) ? "Enabled" : "Disabled") + "\n";
+      string += "*** *** Artnet Input: " + ((this.getPortTypesOutputArtnetAble(i)) ? "Enabled" : "Disabled") + "\n";
+      string += "*** *** Protocol: ";
+      switch(this.getPortTypesProtocol(i)){
+        case portTypesProtocolOptionDMX: string += "DMX 512\n"; break;
+        case portTypesProtocolOptionDMX: string += "MIDI\n"; break;
+        case portTypesProtocolOptionDMX: string += "Avab\n"; break;
+        case portTypesProtocolOptionDMX: string += "Colortran CMX\n"; break;
+        case portTypesProtocolOptionDMX: string += "ADB 62.5\n"; break;
+        case portTypesProtocolOptionDMX: string += "Art-Net\n"; break;
+        default: string += "Unkown Protocol\n"; break;
+      }
+    }
+    string += "Good Input:\n";
+    for(var i = 0; i < goodInputSize; i++){
+      string += "*** " + i.toString() + ":\n";
+      string += "*** *** Data Received: " + ((this.getGoodInputDataReceived(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 1: " + ((this.getGoodInputIncludesTestPackets1(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX SIP's: " + ((this.getGoodInputIncludesSIPs(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 2: " + ((this.getGoodInputIncludesTestPackets2(i)) ? "True" : "False") + "\n";
+      string += "*** *** Input: " + ((this.getGoodInputInputDisable(i)) ? "Disabled" : "Enabled") + "\n";
+      string += "*** *** Receive Errors: " + ((this.getGoodInputReceiveErrorDetected(i)) ? "Detected" : "Not Detected") + "\n";
+    }
+    string += "Good Ouput:\n";
+    for(var i = 0; i < goodOutputSize; i++){
+      string += "*** " + i.toString() + ":\n";
+      string += "*** *** Data Transmitting: " + ((this.getGoodOutputDataTransmiting(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 1: " + ((this.getGoodOutputIncludesTestPackets1(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX SIP's: " + ((this.getGoodOutputIncludesSIPs(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 2: " + ((this.getGoodOutputIncludesTestPackets2(i)) ? "True" : "False") + "\n";
+      string += "*** *** Merge: " + ((this.getGoodOutputIsMerging(i)) ? "Disabled" : "Enabled") + "\n";
+      string += "*** *** DMX Short: " + ((this.getGoodOutputShortDetected(i)) ? "Detected" : "Not Detected") + "\n";
+      string += "*** *** Merge is LTP: " + ((this.getGoodOutputMergeIsLTP(i)) ? "True" : "False") + "\n";
+      string += "*** *** Protocol: " + ((this.getGoodOutputProtocol(i) == goodOutputProtocolOptionSacn) ? "sACN" : "Art-Net") + "\n";
+    }
+    string += "Video Switch: 0x" + this.swVideo.toRadixString(16) + "\n";
+    string += "Macro Switch: 0x" + this.swMacro.toRadixString(16) + "\n";
+    string += "Remote Switch: 0x" + this.swRemote.toRadixString(16) + "\n";
+    string += "Mac: ";
+    string += this.macHi.toRadixString(16) + ".";
+    string += this.mac4.toRadixString(16) + ".";
+    string += this.mac3.toRadixString(16) + ".";
+    string += this.mac2.toRadixString(16) + ".";
+    string += this.mac1.toRadixString(16) + ".";
+    string += this.macLo.toRadixString(16) + "\n";
+    string += "Bind Ip: " + this.bindIp[0].toString() + "." + this.bindIp[1].toString() + "." + this.bindIp[2].toString() + "." + this.bindIp[3].toString() + "\n";
+    string += "Bind Index: " + this.bindIndex.toString() + "\n";
+    string += "Status 2: 0x" + this.status2.toRadixString(16) + "\n";
+    string += "*** Node is Squawking: " + ((this.status2IsSquawking) ? "True" : "False") + "\n";
+    string += "*** Node is Protocol Switchable (Art-Net - sACN): " + ((this.status2ProtocolSwitchable) ? "True" : "False") + "\n";
+    string += "*** Node Supports 15 Bit Port-Address (Art-Net 3 or 4): " + ((this.status215BitSupport) ? "True" : "False") + "\n";
+    string += "*** Node Supports DHCP: " + ((this.status2DHCPCapable) ? "True" : "False") + "\n";
+    string += "*** Node's ip is set " + ((this.status2IpIsSetManually) ? "manually" : "by DHCP") + "\n";
+    string += "*** Node Supports Web Configurations: " + ((this.status2HasWebConfigurationSupport) ? "True" : "False") + "\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
 
 }
