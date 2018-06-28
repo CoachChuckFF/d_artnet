@@ -26,4 +26,46 @@ void main() {
     print(packet1);
     print(packet1.toHexString());
   });
+
+  test('creates artnet ip prog packet', (){
+    final packet1 = new ArtnetIpProgPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
+
+  test('creates artnet ip prog reply packet', (){
+    final packet1 = new ArtnetIpProgReplyPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
+
+  test('creates artnet ip prog reply packet', (){
+    final packet1 = new ArtnetIpProgReplyPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
+
+  test('creates artnet command packet', (){
+    final packet1 = new ArtnetCommandPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
+
+  test('creates artnet sync packet', (){
+    final packet1 = new ArtnetSyncPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
+
+  test('creates artnet firmware master packet', (){
+    final packet1 = new ArtnetFirmwareMasterPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
+
+  test('creates artnet firmware reply packet', (){
+    final packet1 = new ArtnetFirmwareReplyPacket();
+    print(packet1);
+    print(packet1.toHexString());
+  });
 }

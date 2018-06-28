@@ -835,7 +835,7 @@ class ArtnetPollReplyPacket {
     string += "*** Firmware Boot: " + ((this.status1FirmwareBoot == status1FirmwareBootOptionRom) ? "ROM boot" : "Normal boot (from flash)") + "\n";
     string += "*** RDM Capable: " + ((this.status1RdmCapable) ? "Capable" : "Not Capable") + "\n";
     string += "*** UBEA Present: " + ((this.status1UbeaPresent) ? "Present" : "Not Present or Currupt") + "\n";
-    string += "Esta Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
+    string += "ESTA Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
     string += "Short Name: " + this.shortName + "\n";
     string += "Long Name: " + this.longName + "\n";
     string += "Node Report: " + this.nodeReport + "\n";
@@ -1156,6 +1156,731 @@ class ArtnetAddressPacket {
       case commandOptionClearOp3: string += "Blackout Port 3 DMX Buffer\n"; break;
       case 0x6969: string += "SOC was here\n"; break;
       default: string += "Invalid Command\n"; break;
+    }
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetIpProgPacket {
+  static const size = 34;
+  static const opCode = 0xF800;
+
+  /* Sizes */
+  static const progIpSize = 4;
+  static const progSubnetSize = 4;
+  static const progPortSize = 2;
+  static const spareSize = 8;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const filler1Index = protVerLoIndex + 1;
+  static const filler2Index = filler1Index + 1;
+  static const commandIndex = filler2Index + 1;
+  static const filler4Index = commandIndex + 1; //because Art-Net 4 can't count
+  static const progIpHiIndex = filler4Index + 1;
+  static const progIp2Index = progIpHiIndex + 1;
+  static const progIp1Index = progIp2Index + 1;
+  static const progIpLoIndex = progIp1Index + 1;
+  static const progSmHiIndex = progIpLoIndex + 1;
+  static const progSm2Index = progSmHiIndex + 1;
+  static const progSm1Index = progSm2Index + 1;
+  static const progSmLoIndex = progSm1Index + 1;
+  static const progPortHiIndex = progSmLoIndex + 1; //depreciated
+  static const progPortLoIndex = progPortHiIndex + 1;
+  static const spareIndex = progPortLoIndex + 1;
+
+  /* Masks */
+  static const commandProgrammingEnableMask = 0x80;
+  static const commandDHCPEnableMask = 0x40;
+  static const commandResetIpSubnetPortToDefaultMask = 0x08;
+  static const commandProgramIpMask = 0x04;
+  static const commandProgramSubnetMask = 0x02;
+  static const commandProgramPortMask = 0x01;
+
+  ByteData packet;
+
+  ArtnetIpProgPacket([List<int> packet]){
+    this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  int get command => this.packet.getUint8(commandIndex);
+  set command(int value) => this.packet.setUint8(commandIndex, value);
+
+  bool get commandProgrammingEnable => ((this.command & commandProgrammingEnableMask) != 0x00);
+  set commandProgrammingEnable(bool value) => (value) ? this.command |= commandProgrammingEnableMask : this.command &= ~commandProgrammingEnableMask;
+
+  bool get commandDHCPEnable => ((this.command & commandDHCPEnableMask) != 0x00);
+  set commandDHCPEnable(bool value) => (value) ? this.command |= commandDHCPEnableMask : this.command &= ~commandDHCPEnableMask;
+
+  bool get commandResetIpSubnetPortToDefault => ((this.command & commandResetIpSubnetPortToDefaultMask) != 0x00);
+  set commandResetIpSubnetPortToDefault(bool value) => (value) ? this.command |= commandResetIpSubnetPortToDefaultMask : this.command &= ~commandResetIpSubnetPortToDefaultMask;
+
+  bool get commandProgramIp => ((this.command & commandProgramIpMask) != 0x00);
+  set commandProgramIp(bool value) => (value) ? this.command |= commandProgramIpMask : this.command &= ~commandProgramIpMask;
+
+  bool get commandProgramSubnet => ((this.command & commandProgramSubnetMask) != 0x00);
+  set commandProgramSubnet(bool value) => (value) ? this.command |= commandProgramSubnetMask : this.command &= ~commandProgramSubnetMask;
+
+  bool get commandProgramPort => ((this.command & commandProgramPortMask) != 0x00);
+  set commandProgramPort(bool value) => (value) ? this.command |= commandProgramPortMask : this.command &= ~commandProgramPortMask;
+
+  int get progIpHi => this.packet.getUint8(progIpHiIndex);
+  set progIpHi(int value) => this.packet.setUint8(progIpHiIndex, value);
+
+  int get progIp2 => this.packet.getUint8(progIp2Index);
+  set progIp2(int value) => this.packet.setUint8(progIp2Index, value);
+
+  int get progIp1 => this.packet.getUint8(progIp1Index);
+  set progIp1(int value) => this.packet.setUint8(progIp1Index, value);
+
+  int get progIpLo => this.packet.getUint8(progIpLoIndex);
+  set progIpLo(int value) => this.packet.setUint8(progIpLoIndex, value);
+
+  List<int> get progIp => this.packet.buffer.asUint8List(progIpHiIndex, progIpSize);
+  set ip(List<int> value){
+    for(var i = 0; i < progIpSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(progIpHiIndex + i, 0);    
+      } else {
+        this.packet.setUint8(progIpHiIndex + i, value[i]);
+      }
+    }
+  }
+
+  int get progSmHi => this.packet.getUint8(progSmHiIndex);
+  set progSmHi(int value) => this.packet.setUint8(progSmHiIndex, value);
+
+  int get progSm2 => this.packet.getUint8(progSm2Index);
+  set progSm2(int value) => this.packet.setUint8(progSm2Index, value);
+
+  int get progSm1 => this.packet.getUint8(progSm1Index);
+  set progSm1(int value) => this.packet.setUint8(progSm1Index, value);
+
+  int get progSmLo => this.packet.getUint8(progSmLoIndex);
+  set progSmLo(int value) => this.packet.setUint8(progSmLoIndex, value);
+
+  List<int> get progSm => this.packet.buffer.asUint8List(progSmHiIndex, progSubnetSize);
+  set progSm(List<int> value){
+    for(var i = 0; i < progSubnetSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(progSmHiIndex + i, 0);    
+      } else {
+        this.packet.setUint8(progSmHiIndex + i, value[i]);
+      }
+    }
+  }
+
+  int get progPortHi => this.packet.getUint8(progPortHiIndex);
+  set progPortHi(int value) => this.packet.setUint8(progPortHiIndex, value);
+
+  int get progPortLo => this.packet.getUint8(progPortLoIndex);
+  set progPortLo(int value) => this.packet.setUint8(progPortLoIndex, value);
+
+  int get progPort => this.packet.getUint16(progPortHiIndex);
+  set progPort(int value) =>this.packet.setUint16(progPortHiIndex, value);
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Ip Prog Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Command: \n";
+    string += "*** Programming: " + ((this.commandProgrammingEnable) ? "Enabled" : "Disabled") + "\n";
+    string += "*** DHCP: " + ((this.commandDHCPEnable) ? "Enabled" : "Disabled") + "\n";
+    string += "*** Node is set to " + ((this.commandResetIpSubnetPortToDefault) ? "reset " : "NOT reset ") + "ip, netmask and port back to default\n";
+    string += "*** Node is set to " + ((this.commandProgramIp) ? "program " : "NOT program ") + " the ip\n";
+    string += "*** Node is set to " + ((this.commandProgramSubnet) ? "program " : "NOT program ") + " the subnet\n";
+    string += "*** Node is set to " + ((this.commandProgramPort) ? "program " : "NOT program ") + " the port\n";
+    string += "Ip to be Programmed: " + this.progIp[0].toString() + "." + this.progIp[1].toString() + "." + this.progIp[2].toString() + "." + this.progIp[3].toString() + "\n";
+    string += "Subnet to be Programmed: " + this.progSm[0].toString() + "." + this.progSm[1].toString() + "." + this.progSm[2].toString() + "." + this.progSm[3].toString() + "\n";
+    string += "Port to be Programmed: " + this.progPort.toString() + "\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetIpProgReplyPacket {
+  static const size = 34;
+  static const opCode = 0xF900;
+
+  /* Sizes */
+  static const progIpSize = 4;
+  static const progSubnetSize = 4;
+  static const progPortSize = 2;
+  static const spareSize = 7;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const filler1Index = protVerLoIndex + 1;
+  static const filler2Index = filler1Index + 1;
+  static const filler3Index = filler2Index + 1;
+  static const filler4Index = filler3Index + 1;
+  static const progIpHiIndex = filler4Index + 1;
+  static const progIp2Index = progIpHiIndex + 1;
+  static const progIp1Index = progIp2Index + 1;
+  static const progIpLoIndex = progIp1Index + 1;
+  static const progSmHiIndex = progIpLoIndex + 1;
+  static const progSm2Index = progSmHiIndex + 1;
+  static const progSm1Index = progSm2Index + 1;
+  static const progSmLoIndex = progSm1Index + 1;
+  static const progPortHiIndex = progSmLoIndex + 1; //depreciated
+  static const progPortLoIndex = progPortHiIndex + 1;
+  static const statusIndex = progPortLoIndex + 1;
+
+  /* Masks */
+  static const statusDHCPEnabledMask = 0x40;
+
+  ByteData packet;
+
+  ArtnetIpProgReplyPacket([List<int> packet]){
+    this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  int get progIpHi => this.packet.getUint8(progIpHiIndex);
+  set progIpHi(int value) => this.packet.setUint8(progIpHiIndex, value);
+
+  int get progIp2 => this.packet.getUint8(progIp2Index);
+  set progIp2(int value) => this.packet.setUint8(progIp2Index, value);
+
+  int get progIp1 => this.packet.getUint8(progIp1Index);
+  set progIp1(int value) => this.packet.setUint8(progIp1Index, value);
+
+  int get progIpLo => this.packet.getUint8(progIpLoIndex);
+  set progIpLo(int value) => this.packet.setUint8(progIpLoIndex, value);
+
+  List<int> get progIp => this.packet.buffer.asUint8List(progIpHiIndex, progIpSize);
+  set ip(List<int> value){
+    for(var i = 0; i < progIpSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(progIpHiIndex + i, 0);    
+      } else {
+        this.packet.setUint8(progIpHiIndex + i, value[i]);
+      }
+    }
+  }
+
+  int get progSmHi => this.packet.getUint8(progSmHiIndex);
+  set progSmHi(int value) => this.packet.setUint8(progSmHiIndex, value);
+
+  int get progSm2 => this.packet.getUint8(progSm2Index);
+  set progSm2(int value) => this.packet.setUint8(progSm2Index, value);
+
+  int get progSm1 => this.packet.getUint8(progSm1Index);
+  set progSm1(int value) => this.packet.setUint8(progSm1Index, value);
+
+  int get progSmLo => this.packet.getUint8(progSmLoIndex);
+  set progSmLo(int value) => this.packet.setUint8(progSmLoIndex, value);
+
+  List<int> get progSm => this.packet.buffer.asUint8List(progSmHiIndex, progSubnetSize);
+  set progSm(List<int> value){
+    for(var i = 0; i < progSubnetSize; i++){
+      if(value.length <= i){
+        this.packet.setUint8(progSmHiIndex + i, 0);    
+      } else {
+        this.packet.setUint8(progSmHiIndex + i, value[i]);
+      }
+    }
+  }
+
+  int get progPortHi => this.packet.getUint8(progPortHiIndex);
+  set progPortHi(int value) => this.packet.setUint8(progPortHiIndex, value);
+
+  int get progPortLo => this.packet.getUint8(progPortLoIndex);
+  set progPortLo(int value) => this.packet.setUint8(progPortLoIndex, value);
+
+  int get progPort => this.packet.getUint16(progPortHiIndex);
+  set progPort(int value) =>this.packet.setUint16(progPortHiIndex, value);
+
+  int get status => this.packet.getUint8(statusIndex);
+  set status(int value) => this.packet.setUint8(statusIndex, value);
+
+  bool get dhcpEnabled => ((this.status & statusDHCPEnabledMask) != 0x00);
+  set dhcpEnabled(bool value) => (value) ? this.status |= statusDHCPEnabledMask : this.status &= ~statusDHCPEnabledMask;
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Ip Prog Reply Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Node Ip: " + this.progIp[0].toString() + "." + this.progIp[1].toString() + "." + this.progIp[2].toString() + "." + this.progIp[3].toString() + "\n";
+    string += "Node Subnet: " + this.progSm[0].toString() + "." + this.progSm[1].toString() + "." + this.progSm[2].toString() + "." + this.progSm[3].toString() + "\n";
+    string += "Node Port: " + this.progPort.toString() + "\n";
+    string += "Node Status: 0x" + this.status.toString() + "\n";
+    string += "*** DHCP Enable: " + ((this.dhcpEnabled) ? "Enabled" : "Disabled") + "\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetCommandPacket {
+  static const size = 16;
+  static const opCode = 0x2400;
+
+  /* Sizes */
+  static const defaultDataLength = 512;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const estaManHiIndex = protVerLoIndex + 1;
+  static const estaManLoIndex = estaManHiIndex + 1;
+  static const lengthHiIndex = estaManLoIndex + 1;
+  static const lengthLoIndex = lengthHiIndex + 1;
+  static const dataIndex = lengthLoIndex + 1;
+
+
+  ByteData packet;
+
+  ArtnetCommandPacket([List<int> packet, int dataLength = defaultDataLength]){
+    this.packet = new ByteData(size + dataLength);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+
+    //set size
+    this.dataLength = dataLength;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  int get estaManLo => this.packet.getUint8(estaManLoIndex);
+  set estaManLo(int value) => this.packet.setUint8(estaManLoIndex, value);
+
+  int get estaManHi => this.packet.getUint8(estaManHiIndex);
+  set estaManHi(int value) => this.packet.setUint8(estaManHiIndex, value);
+
+  int get estaMan => this.estaManHi << 8 | this.estaManLo;
+  set estaMan(int value){
+    this.estaManHi = value >> 8;
+    this.estaManLo = value & 0xFF;
+  }
+
+  int get lengthHi => this.packet.getUint8(lengthHiIndex);
+  set lengthHi(int value) => this.packet.setUint8(lengthHiIndex, value);
+
+  int get lengthLo => this.packet.getUint8(lengthLoIndex);
+  set lengthLo(int value) => this.packet.setUint8(lengthLoIndex, value);
+
+  int get dataLength => this.packet.getUint16(lengthHiIndex);
+  set dataLength(int value){
+    if(value > defaultDataLength || value < 0){
+      return;
+    }
+
+    this.packet.setUint16(lengthHiIndex, value);
+  }
+
+  List<int> get data => this.packet.buffer.asUint8List(dataIndex, this.dataLength);
+  set data(List<int> value){
+    for(var i = 0; i < this.dataLength; i++){
+      if(value.length <= i){
+        return;
+      }
+      this.data[i] = value[i];
+    }
+  }
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Command Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "ESTA Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
+    string += "Data Length: " + this.dataLength.toString() + "\n";
+    string += "Data:";
+    for(var i = 0; i < this.dataLength; i++){
+      if((i % 16) == 0){
+        string +="\n";
+      }
+      String tempString = this.data[i].toRadixString(16);
+      if(tempString.length < 2) tempString = "0" + tempString;
+      while(tempString.length < 3){
+        tempString += " ";
+      }
+      string += tempString;
+    }
+    string += "\n***********************************************\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size + dataLength; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetSyncPacket {
+  static const size = 14;
+  static const opCode = 0x5200;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const aux1Index = protVerLoIndex + 1;
+  static const aux2Index = aux1Index + 1;
+
+  ByteData packet;
+
+  ArtnetSyncPacket([List<int> packet]){
+    this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Sync Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetFirmwareMasterPacket {
+  static const size = 552;
+  static const opCode = 0xF200;
+
+  /* Sizes */
+  static const spareSize = 20;
+  static const dataSize = 512;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const filler1Index = protVerLoIndex + 1;
+  static const filler2Index = filler1Index + 1;
+  static const typeIndex = filler2Index + 1;
+  static const blockIdIndex = typeIndex + 1;
+  static const firmwareLength3Index = blockIdIndex + 1;
+  static const firmwareLength2Index = firmwareLength3Index + 1;
+  static const firmwareLength1Index = firmwareLength2Index + 1;
+  static const firmwareLength0Index = firmwareLength1Index + 1;
+  static const spareIndex = firmwareLength0Index + 1;
+  static const dataIndex = spareIndex + spareSize;
+
+  /* Options */
+  static const typeOptionFirmFirst = 0x00;
+  static const typeOptionFirmCont = 0x01;
+  static const typeOptionFirmLast = 0x02;
+  static const typeOptionUbeaFirst = 0x03;
+  static const typeOptionUbeaCont = 0x04;
+  static const typeOptionUbeaLast = 0x05;
+
+  ByteData packet;
+
+  ArtnetFirmwareMasterPacket([List<int> packet]){
+    this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  int get type => this.packet.getUint8(typeIndex);
+  set type(int value) => this.packet.setUint8(typeIndex, value);
+
+  int get blockId => this.packet.getUint8(blockIdIndex);
+  set blockId(int value) => this.packet.setUint8(blockIdIndex, value);
+
+  int get firmwareLength3 => this.packet.getUint8(firmwareLength3Index);
+  set firmwareLength3(int value) => this.packet.setUint8(firmwareLength3Index, value);
+
+  int get firmwareLength2 => this.packet.getUint8(firmwareLength2Index);
+  set firmwareLength2(int value) => this.packet.setUint8(firmwareLength2Index, value);
+
+  int get firmwareLength1 => this.packet.getUint8(firmwareLength1Index);
+  set firmwareLength1(int value) => this.packet.setUint8(firmwareLength1Index, value);
+
+  int get firmwareLength0 => this.packet.getUint8(firmwareLength0Index);
+  set firmwareLength0(int value) => this.packet.setUint8(firmwareLength0Index, value);
+
+  int get firmwareLength => this.packet.getUint64(firmwareLength3Index);
+  set firmwareLength(int value) => this.packet.setUint64(firmwareLength3Index, value);
+
+  List<int> get data => this.packet.buffer.asUint8List(dataIndex, dataSize);
+  set data(List<int> value){
+    for(var i = 0; i < dataSize; i++){
+      if(value.length <= i){
+        return;
+      }
+      this.data[i] = value[i];
+    }
+  }
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Firmware Master Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Type: ";
+    switch(this.type){
+      case typeOptionFirmFirst: string += "First Firmware Block\n"; break;
+      case typeOptionFirmFirst: string += "Firmware Block " + this.blockId.toString() + "\n"; break;
+      case typeOptionFirmFirst: string += "Last Firmware Block\n"; break;
+      case typeOptionFirmFirst: string += "First UBEA Block\n"; break;
+      case typeOptionFirmFirst: string += "UBEA Block " + this.blockId.toString() + "\n"; break;
+      case typeOptionFirmFirst: string += "Last UBEA Block\n"; break;
+      default: string += "Unkown Type\n"; break;
+    }
+    string += "Block Id: " + this.blockId.toString() + "\n";
+    string += "Firmware Length (words - Int16): " + this.firmwareLength.toString() + "\n";
+    string += "Data:";
+    for(var i = 0; i < dataSize; i++){
+      if((i % 16) == 0){
+        string +="\n";
+      }
+      String tempString = this.data[i].toRadixString(16);
+      if(tempString.length < 2) tempString = "0" + tempString;
+      while(tempString.length < 3){
+        tempString += " ";
+      }
+      string += tempString;
+    }
+    string += "\n***********************************************\n";
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetFirmwareReplyPacket {
+  static const size = 36;
+  static const opCode = 0xF300;
+
+  /* Sizes */
+  static const spareSize = 21;
+
+  /* Indexes */
+  static const protVerHiIndex = opCodeIndex + 2;
+  static const protVerLoIndex = protVerHiIndex + 1;
+  static const filler1Index = protVerLoIndex + 1;
+  static const filler2Index = filler1Index + 1;
+  static const typeIndex = filler2Index + 1;
+  static const spareIndex = typeIndex + 1;
+
+  /* Options */
+  static const typeOptionFirmBlockGood = 0x00;
+  static const typeOptionFirmAllGood = 0x01;
+  static const typeOptionFirmFail = 0xFF;
+
+  ByteData packet;
+
+  ArtnetFirmwareReplyPacket([List<int> packet]){
+    this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+
+    //set protocol version
+    this.protVersion = protVer;
+  }
+
+  int get protVerHi => this.packet.getUint8(protVerHiIndex);
+  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+
+  int get protVerLo => this.packet.getUint8(protVerLoIndex);
+  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+
+  int get protVersion => this.packet.getUint16(protVerHiIndex);
+  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+
+  int get type => this.packet.getUint8(typeIndex);
+  set type(int value) => this.packet.setUint8(typeIndex, value);
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  @override
+  String toString() {
+    String string = "***Artnet Firmware Reply Packet***\n";
+    string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Type: ";
+    switch(this.type){
+      case typeOptionFirmBlockGood: string += "Last block received successfully\n"; break;
+      case typeOptionFirmAllGood: string += "All firmware blocks received successfully\n"; break;
+      case typeOptionFirmFail: string += "Firmware block failure\n"; break;
+      default: string += "Unkown Type\n"; break;
     }
     return string;
   }
