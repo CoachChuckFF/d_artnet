@@ -1,6 +1,6 @@
 name: d_artnet
 description: An artnet packet builder
-version: 0.0.1
+version: 0.1.0
 author: Christian Krueger
 homepage:
 
