@@ -26,13 +26,8 @@ bool checkArtnetPacket(List<int> packet){
 }
 
 int getOpCode(List<int> packet){
+  if(packet.length <= opCodeIndex + 1) return -1;
   return packet[opCodeIndex] << 8 | packet[opCodeIndex + 1];
-}
-
-int getOpcode(List<int> packet){
-  if(packet.length <= opCodeIndex) return -1;
-
-  return packet[opCodeIndex];
 }
 
 class ArtnetDataPacket {
