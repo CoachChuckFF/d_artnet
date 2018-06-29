@@ -8,7 +8,7 @@ const protVer = 14;
 const opCodeIndex = 8;
 
 void copyIdtoBuffer(ByteData buffer, int opCode){
-  final List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+  const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
   for(var i = 0; i < id.length; i++){
     buffer.setUint8(i, id[i]);
   }
@@ -16,7 +16,7 @@ void copyIdtoBuffer(ByteData buffer, int opCode){
 }
 
 bool checkArtnetPacket(List<int> packet){
-  final List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+  const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
   for(var i = 0; i < id.length; i++){
     if(packet[i] != id[i]){
       return false;
@@ -52,9 +52,9 @@ int generateUUID32(int seed){
 }
 
 class ArtnetDataPacket implements ArtnetPacket{
-  static final type = "Artnet Data Packet";
-  static final size = 18;
-  static final opCode = 0x5000;
+  static const type = "Artnet Data Packet";
+  static const size = 18;
+  static const opCode = 0x5000;
   static const defaultDataLength = 512;
 
   /* Indexes */
@@ -221,9 +221,9 @@ class ArtnetDataPacket implements ArtnetPacket{
 }
 
 class ArtnetPollPacket implements ArtnetPacket{
-  static final type = "Artnet Poll Packet";
-  static final size = 14;
-  static final opCode = 0x2000;
+  static const type = "Artnet Poll Packet";
+  static const size = 14;
+  static const opCode = 0x2000;
 
   /* Indexes */
   static const protVerHiIndex = opCodeIndex + 2;
@@ -320,9 +320,9 @@ class ArtnetPollPacket implements ArtnetPacket{
 }
 
 class ArtnetPollReplyPacket implements ArtnetPacket {
-  static final type = "Artnet Poll Reply Packet";
-  static final size = 234;
-  static final opCode = 0x2100;
+  static const type = "Artnet Poll Reply Packet";
+  static const size = 234;
+  static const opCode = 0x2100;
 
   /* Sizes */
   static const ipAddressSize = 4;
@@ -938,9 +938,9 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
 }
 
 class ArtnetAddressPacket implements ArtnetPacket{
-  static final type = "Artnet Address Packet";
-  static final size = 107;
-  static final opCode = 0x6000;
+  static const type = "Artnet Address Packet";
+  static const size = 107;
+  static const opCode = 0x6000;
 
   /* Sizes */
   static const shortNameSize = 18;
@@ -1199,9 +1199,9 @@ class ArtnetAddressPacket implements ArtnetPacket{
 }
 
 class ArtnetIpProgPacket implements ArtnetPacket{
-  static final type = "Artnet Ip Prog Packet";
-  static final size = 34;
-  static final opCode = 0xF800;
+  static const type = "Artnet Ip Prog Packet";
+  static const size = 34;
+  static const opCode = 0xF800;
 
   /* Sizes */
   static const progIpSize = 4;
@@ -1374,9 +1374,9 @@ class ArtnetIpProgPacket implements ArtnetPacket{
 }
 
 class ArtnetIpProgReplyPacket implements ArtnetPacket{
-  static final type = "Artnet Ip Prog Reply Packet";
-  static final size = 34;
-  static final opCode = 0xF900;
+  static const type = "Artnet Ip Prog Reply Packet";
+  static const size = 34;
+  static const opCode = 0xF900;
 
   /* Sizes */
   static const progIpSize = 4;
@@ -1524,9 +1524,9 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
 }
 
 class ArtnetCommandPacket implements ArtnetPacket{
-  static final type = "Artnet Command Packet";
-  static final size = 16;
-  static final opCode = 0x2400;
+  static const type = "Artnet Command Packet";
+  static const size = 16;
+  static const opCode = 0x2400;
 
   /* Sizes */
   static const defaultDataLength = 512;
@@ -1648,9 +1648,9 @@ class ArtnetCommandPacket implements ArtnetPacket{
 }
 
 class ArtnetSyncPacket implements ArtnetPacket{
-  static final type = "Artnet Sync Packet";
-  static final size = 14;
-  static final opCode = 0x5200;
+  static const type = "Artnet Sync Packet";
+  static const size = 14;
+  static const opCode = 0x5200;
 
   /* Indexes */
   static const protVerHiIndex = opCodeIndex + 2;
@@ -1710,9 +1710,9 @@ class ArtnetSyncPacket implements ArtnetPacket{
 }
 
 class ArtnetFirmwareMasterPacket implements ArtnetPacket{
-  static final type = "Artnet Firmware Master Packet";
-  static final size = 552;
-  static final opCode = 0xF200;
+  static const type = "Artnet Firmware Master Packet";
+  static const size = 552;
+  static const opCode = 0xF200;
 
   /* Sizes */
   static const spareSize = 20;
@@ -1848,9 +1848,9 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
 }
 
 class ArtnetFirmwareReplyPacket implements ArtnetPacket{
-  static final type = "Artnet Firmware Reply Packet";
-  static final size = 36;
-  static final opCode = 0xF300;
+  static const type = "Artnet Firmware Reply Packet";
+  static const size = 36;
+  static const opCode = 0xF300;
 
   /* Sizes */
   static const spareSize = 21;
@@ -1930,9 +1930,9 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
 }
 
 class ArtnetBeepBeepPacket implements ArtnetPacket{
-  static final type = "Beep Beep";
-  static final size = 15;
-  static final opCode = 0x6996;
+  static const type = "Beep Beep";
+  static const size = 15;
+  static const opCode = 0x6996;
 
   /* Indexes */
   static const uuidIndex = opCodeIndex + 3;
