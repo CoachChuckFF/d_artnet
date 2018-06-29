@@ -52,9 +52,9 @@ int generateUUID32(int seed){
 }
 
 class ArtnetDataPacket implements ArtnetPacket{
-  final type = "Artnet Data Packet";
-  final size = 18;
-  final opCode = 0x5000;
+  static final type = "Artnet Data Packet";
+  static final size = 18;
+  static final opCode = 0x5000;
   static const defaultDataLength = 512;
 
   /* Indexes */
@@ -221,9 +221,9 @@ class ArtnetDataPacket implements ArtnetPacket{
 }
 
 class ArtnetPollPacket implements ArtnetPacket{
-  final type = "Artnet Poll Packet";
-  final size = 14;
-  final opCode = 0x2000;
+  static final type = "Artnet Poll Packet";
+  static final size = 14;
+  static final opCode = 0x2000;
 
   /* Indexes */
   static const protVerHiIndex = opCodeIndex + 2;
@@ -320,9 +320,9 @@ class ArtnetPollPacket implements ArtnetPacket{
 }
 
 class ArtnetPollReplyPacket implements ArtnetPacket {
-  final type = "Artnet Poll Reply Packet";
-  final size = 234;
-  final opCode = 0x2100;
+  static final type = "Artnet Poll Reply Packet";
+  static final size = 234;
+  static final opCode = 0x2100;
 
   /* Sizes */
   static const ipAddressSize = 4;
@@ -938,9 +938,9 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
 }
 
 class ArtnetAddressPacket implements ArtnetPacket{
-  final type = "Artnet Address Packet";
-  final size = 107;
-  final opCode = 0x6000;
+  static final type = "Artnet Address Packet";
+  static final size = 107;
+  static final opCode = 0x6000;
 
   /* Sizes */
   static const shortNameSize = 18;
@@ -1199,9 +1199,9 @@ class ArtnetAddressPacket implements ArtnetPacket{
 }
 
 class ArtnetIpProgPacket implements ArtnetPacket{
-  final type = "Artnet Ip Prog Packet";
-  final size = 34;
-  final opCode = 0xF800;
+  static final type = "Artnet Ip Prog Packet";
+  static final size = 34;
+  static final opCode = 0xF800;
 
   /* Sizes */
   static const progIpSize = 4;
@@ -1374,9 +1374,9 @@ class ArtnetIpProgPacket implements ArtnetPacket{
 }
 
 class ArtnetIpProgReplyPacket implements ArtnetPacket{
-  final type = "Artnet Ip Prog Reply Packet";
-  final size = 34;
-  final opCode = 0xF900;
+  static final type = "Artnet Ip Prog Reply Packet";
+  static final size = 34;
+  static final opCode = 0xF900;
 
   /* Sizes */
   static const progIpSize = 4;
@@ -1524,9 +1524,9 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
 }
 
 class ArtnetCommandPacket implements ArtnetPacket{
-  final type = "Artnet Command Packet";
-  final size = 16;
-  final opCode = 0x2400;
+  static final type = "Artnet Command Packet";
+  static final size = 16;
+  static final opCode = 0x2400;
 
   /* Sizes */
   static const defaultDataLength = 512;
@@ -1648,9 +1648,9 @@ class ArtnetCommandPacket implements ArtnetPacket{
 }
 
 class ArtnetSyncPacket implements ArtnetPacket{
-  final type = "Artnet Sync Packet";
-  final size = 14;
-  final opCode = 0x5200;
+  static final type = "Artnet Sync Packet";
+  static final size = 14;
+  static final opCode = 0x5200;
 
   /* Indexes */
   static const protVerHiIndex = opCodeIndex + 2;
@@ -1710,9 +1710,9 @@ class ArtnetSyncPacket implements ArtnetPacket{
 }
 
 class ArtnetFirmwareMasterPacket implements ArtnetPacket{
-  final type = "Artnet Firmware Master Packet";
-  final size = 552;
-  final opCode = 0xF200;
+  static final type = "Artnet Firmware Master Packet";
+  static final size = 552;
+  static final opCode = 0xF200;
 
   /* Sizes */
   static const spareSize = 20;
@@ -1848,9 +1848,9 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
 }
 
 class ArtnetFirmwareReplyPacket implements ArtnetPacket{
-  final type = "Artnet Firmware Reply Packet";
-  final size = 36;
-  final opCode = 0xF300;
+  static final type = "Artnet Firmware Reply Packet";
+  static final size = 36;
+  static final opCode = 0xF300;
 
   /* Sizes */
   static const spareSize = 21;
@@ -1930,9 +1930,9 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
 }
 
 class ArtnetBeepBeepPacket implements ArtnetPacket{
-  final type = "Beep Beep";
-  final size = 15;
-  final opCode = 0x6996;
+  static final type = "Beep Beep";
+  static final size = 15;
+  static final opCode = 0x6996;
 
   /* Indexes */
   static const uuidIndex = opCodeIndex + 3;
