@@ -1939,10 +1939,16 @@ class ArtnetBeepBeepPacket implements ArtnetPacket{
 
   ByteData packet;
 
-  ArtnetBeepBeepPacket(int uuid){
+  ArtnetBeepBeepPacket([int uuid, List<int> packet]){
     this.packet = new ByteData(size);
+    if(packet != null){
+      for(var i = 0; i < size; i++){
+        this.packet.setUint8(i, packet[i]);
+      }
+      return;
+    }
 
-    this.uuid = uuid;
+    this.uuid = (uuid == null) ? generateUUID32(3) : uuid;
 
     //set id
     copyIdtoBuffer(this.packet, opCode);
