@@ -2,6 +2,7 @@ library d_artnet;
 
 import 'dart:typed_data';
 
+//globals
 const protVer = 14;
 const opCodeIndex = 8;
 
@@ -31,6 +32,7 @@ int getOpcode(List<int> packet){
 }
 
 class ArtnetDataPacket {
+  static const type = "Artnet Data Packet";
   static const size = 18;
   static const opCode = 0x5000;
   static const defaultDataLength = 512;
@@ -159,7 +161,7 @@ class ArtnetDataPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Data Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -199,6 +201,7 @@ class ArtnetDataPacket {
 }
 
 class ArtnetPollPacket {
+  static const type = "Artnet Poll Packet";
   static const size = 14;
   static const opCode = 0x2000;
 
@@ -269,7 +272,7 @@ class ArtnetPollPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Poll Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -297,6 +300,7 @@ class ArtnetPollPacket {
 }
 
 class ArtnetPollReplyPacket {
+  static const type = "Artnet Poll Reply Packet";
   static const size = 234;
   static const opCode = 0x2100;
 
@@ -797,7 +801,7 @@ class ArtnetPollReplyPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Poll Reply Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Ip Address: " + this.ip[0].toString() + "." + this.ip[1].toString() + "." + this.ip[2].toString() + "." + this.ip[3].toString() + "\n";
@@ -914,6 +918,7 @@ class ArtnetPollReplyPacket {
 }
 
 class ArtnetAddressPacket {
+  static const type = "Artnet Address Packet";
   static const size = 107;
   static const opCode = 0x6000;
 
@@ -1106,7 +1111,7 @@ class ArtnetAddressPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Address Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -1174,6 +1179,7 @@ class ArtnetAddressPacket {
 }
 
 class ArtnetIpProgPacket {
+  static const type = "Artnet Ip Prog Packet";
   static const size = 34;
   static const opCode = 0xF800;
 
@@ -1317,7 +1323,7 @@ class ArtnetIpProgPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Ip Prog Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -1348,6 +1354,7 @@ class ArtnetIpProgPacket {
 }
 
 class ArtnetIpProgReplyPacket {
+  static const type = "Artnet Ip Prog Reply Packet";
   static const size = 34;
   static const opCode = 0xF900;
 
@@ -1471,7 +1478,7 @@ class ArtnetIpProgReplyPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Ip Prog Reply Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -1497,6 +1504,7 @@ class ArtnetIpProgReplyPacket {
 }
 
 class ArtnetCommandPacket {
+  static const type = "Artnet Command Packet";
   static const size = 16;
   static const opCode = 0x2400;
 
@@ -1584,7 +1592,7 @@ class ArtnetCommandPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Command Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -1620,6 +1628,7 @@ class ArtnetCommandPacket {
 }
 
 class ArtnetSyncPacket {
+  static const type = "Artnet Sync Packet";
   static const size = 14;
   static const opCode = 0x5200;
 
@@ -1660,7 +1669,7 @@ class ArtnetSyncPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Sync Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
@@ -1681,6 +1690,7 @@ class ArtnetSyncPacket {
 }
 
 class ArtnetFirmwareMasterPacket {
+  static const type = "Artnet Firmware Master Packet";
   static const size = 552;
   static const opCode = 0xF200;
 
@@ -1693,8 +1703,8 @@ class ArtnetFirmwareMasterPacket {
   static const protVerLoIndex = protVerHiIndex + 1;
   static const filler1Index = protVerLoIndex + 1;
   static const filler2Index = filler1Index + 1;
-  static const typeIndex = filler2Index + 1;
-  static const blockIdIndex = typeIndex + 1;
+  static const blockTypeIndex = filler2Index + 1;
+  static const blockIdIndex = blockTypeIndex + 1;
   static const firmwareLength3Index = blockIdIndex + 1;
   static const firmwareLength2Index = firmwareLength3Index + 1;
   static const firmwareLength1Index = firmwareLength2Index + 1;
@@ -1703,12 +1713,12 @@ class ArtnetFirmwareMasterPacket {
   static const dataIndex = spareIndex + spareSize;
 
   /* Options */
-  static const typeOptionFirmFirst = 0x00;
-  static const typeOptionFirmCont = 0x01;
-  static const typeOptionFirmLast = 0x02;
-  static const typeOptionUbeaFirst = 0x03;
-  static const typeOptionUbeaCont = 0x04;
-  static const typeOptionUbeaLast = 0x05;
+  static const blockTypeOptionFirmFirst = 0x00;
+  static const blockTypeOptionFirmCont = 0x01;
+  static const blockTypeOptionFirmLast = 0x02;
+  static const blockTypeOptionUbeaFirst = 0x03;
+  static const blockTypeOptionUbeaCont = 0x04;
+  static const blockTypeOptionUbeaLast = 0x05;
 
   ByteData packet;
 
@@ -1737,8 +1747,8 @@ class ArtnetFirmwareMasterPacket {
   int get protVersion => this.packet.getUint16(protVerHiIndex);
   set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
 
-  int get type => this.packet.getUint8(typeIndex);
-  set type(int value) => this.packet.setUint8(typeIndex, value);
+  int get blockType => this.packet.getUint8(blockTypeIndex);
+  set blockType(int value) => this.packet.setUint8(blockTypeIndex, value);
 
   int get blockId => this.packet.getUint8(blockIdIndex);
   set blockId(int value) => this.packet.setUint8(blockIdIndex, value);
@@ -1772,18 +1782,18 @@ class ArtnetFirmwareMasterPacket {
 
   @override
   String toString() {
-    String string = "***Artnet Firmware Master Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
-    string += "Type: ";
-    switch(this.type){
-      case typeOptionFirmFirst: string += "First Firmware Block\n"; break;
-      case typeOptionFirmFirst: string += "Firmware Block " + this.blockId.toString() + "\n"; break;
-      case typeOptionFirmFirst: string += "Last Firmware Block\n"; break;
-      case typeOptionFirmFirst: string += "First UBEA Block\n"; break;
-      case typeOptionFirmFirst: string += "UBEA Block " + this.blockId.toString() + "\n"; break;
-      case typeOptionFirmFirst: string += "Last UBEA Block\n"; break;
+    string += "Block Type: ";
+    switch(this.blockType){
+      case blockTypeOptionFirmFirst: string += "First Firmware Block\n"; break;
+      case blockTypeOptionFirmFirst: string += "Firmware Block " + this.blockId.toString() + "\n"; break;
+      case blockTypeOptionFirmFirst: string += "Last Firmware Block\n"; break;
+      case blockTypeOptionFirmFirst: string += "First UBEA Block\n"; break;
+      case blockTypeOptionFirmFirst: string += "UBEA Block " + this.blockId.toString() + "\n"; break;
+      case blockTypeOptionFirmFirst: string += "Last UBEA Block\n"; break;
       default: string += "Unkown Type\n"; break;
     }
     string += "Block Id: " + this.blockId.toString() + "\n";
@@ -1818,6 +1828,7 @@ class ArtnetFirmwareMasterPacket {
 }
 
 class ArtnetFirmwareReplyPacket {
+  static const type = "Artnet Firmware Reply Packet";
   static const size = 36;
   static const opCode = 0xF300;
 
@@ -1829,13 +1840,13 @@ class ArtnetFirmwareReplyPacket {
   static const protVerLoIndex = protVerHiIndex + 1;
   static const filler1Index = protVerLoIndex + 1;
   static const filler2Index = filler1Index + 1;
-  static const typeIndex = filler2Index + 1;
-  static const spareIndex = typeIndex + 1;
+  static const blockTypeIndex = filler2Index + 1;
+  static const spareIndex = blockTypeIndex + 1;
 
   /* Options */
-  static const typeOptionFirmBlockGood = 0x00;
-  static const typeOptionFirmAllGood = 0x01;
-  static const typeOptionFirmFail = 0xFF;
+  static const blockTypeOptionFirmBlockGood = 0x00;
+  static const blockTypeOptionFirmAllGood = 0x01;
+  static const blockTypeOptionFirmFail = 0xFF;
 
   ByteData packet;
 
@@ -1864,22 +1875,22 @@ class ArtnetFirmwareReplyPacket {
   int get protVersion => this.packet.getUint16(protVerHiIndex);
   set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
 
-  int get type => this.packet.getUint8(typeIndex);
-  set type(int value) => this.packet.setUint8(typeIndex, value);
+  int get blockType => this.packet.getUint8(blockTypeIndex);
+  set blockType(int value) => this.packet.setUint8(blockTypeIndex, value);
 
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
   @override
   String toString() {
-    String string = "***Artnet Firmware Reply Packet***\n";
+    String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.protVersion.toString() + "\n";
-    string += "Type: ";
-    switch(this.type){
-      case typeOptionFirmBlockGood: string += "Last block received successfully\n"; break;
-      case typeOptionFirmAllGood: string += "All firmware blocks received successfully\n"; break;
-      case typeOptionFirmFail: string += "Firmware block failure\n"; break;
+    string += "Block Type: ";
+    switch(this.blockType){
+      case blockTypeOptionFirmBlockGood: string += "Last block received successfully\n"; break;
+      case blockTypeOptionFirmAllGood: string += "All firmware blocks received successfully\n"; break;
+      case blockTypeOptionFirmFail: string += "Firmware block failure\n"; break;
       default: string += "Unkown Type\n"; break;
     }
     return string;
