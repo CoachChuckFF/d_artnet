@@ -32,9 +32,9 @@ int getOpCode(List<int> packet){
 }
 
 abstract class ArtnetPacket {
-  final type;
-  final size;
-  final opCode;
+  static var type;
+  static var size;
+  static var opCode;
 
   List<int> get udpPacket;
 
