@@ -1,6 +1,7 @@
 library d_artnet;
 
 import 'dart:typed_data';
+import 'dart:math';
 
 //globals
 const protVer = 14;
@@ -27,7 +28,7 @@ bool checkArtnetPacket(List<int> packet){
 
 int getOpCode(List<int> packet){
   if(packet.length <= opCodeIndex + 1) return -1;
-  return packet[opCodeIndex] << 8 | packet[opCodeIndex + 1];
+  return packet[opCodeIndex + 1] << 8 | packet[opCodeIndex];
 }
 
 abstract class ArtnetPacket {
@@ -38,6 +39,16 @@ abstract class ArtnetPacket {
   List<int> get udpPacket;
 
   String toHexString();
+}
+
+int generateUUID32(int seed){
+  var rnJesus = new Random(seed);
+  int uuid = (rnJesus.nextInt(0xFF) << 24) & 0xFF000000;
+  uuid |= (rnJesus.nextInt(0xFF) << 16) & 0x00FF0000;
+  uuid |= (rnJesus.nextInt(0xFF) << 8) & 0x0000FF00;
+  uuid |= (rnJesus.nextInt(0xFF)) & 0x000000FF;
+
+  return uuid;
 }
 
 class ArtnetDataPacket implements ArtnetPacket{
@@ -1902,6 +1913,50 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
       case blockTypeOptionFirmFail: string += "Firmware block failure\n"; break;
       default: string += "Unkown Type\n"; break;
     }
+    return string;
+  }
+
+  String toHexString(){
+    String string = "";
+    String tempString = "";
+    for(var i = 0; i < size; i++){
+      tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
+      if(tempString.length < 2) tempString = "0" + tempString;
+      string += tempString;
+    }
+    return string;
+  }
+
+}
+
+class ArtnetBeepBeepPacket implements ArtnetPacket{
+  final type = "Beep Beep";
+  final size = 15;
+  final opCode = 0x6996;
+
+  /* Indexes */
+  static const uuidIndex = opCodeIndex + 3;
+
+  ByteData packet;
+
+  ArtnetBeepBeepPacket(int uuid){
+    this.packet = new ByteData(size);
+
+    this.uuid = uuid;
+
+    //set id
+    copyIdtoBuffer(this.packet, opCode);
+  }
+
+  int get uuid => this.packet.getUint32(uuidIndex);
+  set uuid(int value) => this.packet.setUint32(uuidIndex, value);
+
+  List<int> get udpPacket => this.packet.buffer.asUint8List();
+
+  String toString() {
+    String string = "***$type***\n";
+    string += "UUID: 0x" + this.uuid.toRadixString(16) + "\n";
+
     return string;
   }
 
