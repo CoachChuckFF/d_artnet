@@ -68,4 +68,9 @@ void main() {
     print(packet1);
     print(packet1.toHexString());
   });
+
+  test('get opcode of artnet data packet', (){
+    final packet1 = new ArtnetDataPacket();
+    print("Opcode: 0x" + getOpCode(packet1.udpPacket).toRadixString(16));
+  });
 }

@@ -25,6 +25,10 @@ bool checkArtnetPacket(List<int> packet){
   return true;
 }
 
+int getOpCode(List<int> packet){
+  return packet[opCodeIndex] << 8 | packet[opCodeIndex + 1];
+}
+
 int getOpcode(List<int> packet){
   if(packet.length <= opCodeIndex) return -1;
 
