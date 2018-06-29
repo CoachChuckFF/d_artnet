@@ -30,10 +30,20 @@ int getOpCode(List<int> packet){
   return packet[opCodeIndex] << 8 | packet[opCodeIndex + 1];
 }
 
-class ArtnetDataPacket {
-  static const type = "Artnet Data Packet";
-  static const size = 18;
-  static const opCode = 0x5000;
+abstract class ArtnetPacket {
+  final type;
+  final size;
+  final opCode;
+
+  List<int> get udpPacket;
+
+  String toHexString();
+}
+
+class ArtnetDataPacket implements ArtnetPacket{
+  final type = "Artnet Data Packet";
+  final size = 18;
+  final opCode = 0x5000;
   static const defaultDataLength = 512;
 
   /* Indexes */
@@ -199,10 +209,10 @@ class ArtnetDataPacket {
 
 }
 
-class ArtnetPollPacket {
-  static const type = "Artnet Poll Packet";
-  static const size = 14;
-  static const opCode = 0x2000;
+class ArtnetPollPacket implements ArtnetPacket{
+  final type = "Artnet Poll Packet";
+  final size = 14;
+  final opCode = 0x2000;
 
   /* Indexes */
   static const protVerHiIndex = opCodeIndex + 2;
@@ -298,10 +308,10 @@ class ArtnetPollPacket {
 
 }
 
-class ArtnetPollReplyPacket {
-  static const type = "Artnet Poll Reply Packet";
-  static const size = 234;
-  static const opCode = 0x2100;
+class ArtnetPollReplyPacket implements ArtnetPacket {
+  final type = "Artnet Poll Reply Packet";
+  final size = 234;
+  final opCode = 0x2100;
 
   /* Sizes */
   static const ipAddressSize = 4;
@@ -916,10 +926,10 @@ class ArtnetPollReplyPacket {
 
 }
 
-class ArtnetAddressPacket {
-  static const type = "Artnet Address Packet";
-  static const size = 107;
-  static const opCode = 0x6000;
+class ArtnetAddressPacket implements ArtnetPacket{
+  final type = "Artnet Address Packet";
+  final size = 107;
+  final opCode = 0x6000;
 
   /* Sizes */
   static const shortNameSize = 18;
@@ -1177,10 +1187,10 @@ class ArtnetAddressPacket {
 
 }
 
-class ArtnetIpProgPacket {
-  static const type = "Artnet Ip Prog Packet";
-  static const size = 34;
-  static const opCode = 0xF800;
+class ArtnetIpProgPacket implements ArtnetPacket{
+  final type = "Artnet Ip Prog Packet";
+  final size = 34;
+  final opCode = 0xF800;
 
   /* Sizes */
   static const progIpSize = 4;
@@ -1352,10 +1362,10 @@ class ArtnetIpProgPacket {
 
 }
 
-class ArtnetIpProgReplyPacket {
-  static const type = "Artnet Ip Prog Reply Packet";
-  static const size = 34;
-  static const opCode = 0xF900;
+class ArtnetIpProgReplyPacket implements ArtnetPacket{
+  final type = "Artnet Ip Prog Reply Packet";
+  final size = 34;
+  final opCode = 0xF900;
 
   /* Sizes */
   static const progIpSize = 4;
@@ -1502,10 +1512,10 @@ class ArtnetIpProgReplyPacket {
 
 }
 
-class ArtnetCommandPacket {
-  static const type = "Artnet Command Packet";
-  static const size = 16;
-  static const opCode = 0x2400;
+class ArtnetCommandPacket implements ArtnetPacket{
+  final type = "Artnet Command Packet";
+  final size = 16;
+  final opCode = 0x2400;
 
   /* Sizes */
   static const defaultDataLength = 512;
@@ -1626,10 +1636,10 @@ class ArtnetCommandPacket {
 
 }
 
-class ArtnetSyncPacket {
-  static const type = "Artnet Sync Packet";
-  static const size = 14;
-  static const opCode = 0x5200;
+class ArtnetSyncPacket implements ArtnetPacket{
+  final type = "Artnet Sync Packet";
+  final size = 14;
+  final opCode = 0x5200;
 
   /* Indexes */
   static const protVerHiIndex = opCodeIndex + 2;
@@ -1688,10 +1698,10 @@ class ArtnetSyncPacket {
 
 }
 
-class ArtnetFirmwareMasterPacket {
-  static const type = "Artnet Firmware Master Packet";
-  static const size = 552;
-  static const opCode = 0xF200;
+class ArtnetFirmwareMasterPacket implements ArtnetPacket{
+  final type = "Artnet Firmware Master Packet";
+  final size = 552;
+  final opCode = 0xF200;
 
   /* Sizes */
   static const spareSize = 20;
@@ -1826,10 +1836,10 @@ class ArtnetFirmwareMasterPacket {
 
 }
 
-class ArtnetFirmwareReplyPacket {
-  static const type = "Artnet Firmware Reply Packet";
-  static const size = 36;
-  static const opCode = 0xF300;
+class ArtnetFirmwareReplyPacket implements ArtnetPacket{
+  final type = "Artnet Firmware Reply Packet";
+  final size = 36;
+  final opCode = 0xF300;
 
   /* Sizes */
   static const spareSize = 21;
