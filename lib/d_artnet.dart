@@ -11,7 +11,7 @@ void copyIdtoBuffer(ByteData buffer, int opCode){
   for(var i = 0; i < id.length; i++){
     buffer.setUint8(i, id[i]);
   }
-  buffer.setUint16(opCodeIndex, opCode);
+  buffer.setUint16(opCodeIndex, opCode, Endian.little);
 }
 
 bool checkArtnetPacket(List<int> packet){
