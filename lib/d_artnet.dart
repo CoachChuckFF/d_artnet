@@ -431,6 +431,13 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const portTypesProtocolOptionArtnet = 0x05;
   static const goodOutputProtocolOptionArtnet = 0x00;
   static const goodOutputProtocolOptionSacn = 0x01;
+  static const styleOptionStNode = 0x00;
+  static const styleOptionStController = 0x01;
+  static const styleOptionStMedia = 0x02;
+  static const styleOptionStRoute = 0x03;
+  static const styleOptionStBackup = 0x04;
+  static const styleOptionStConfig = 0x05;
+  static const styleOptionStVisual = 0x06;
 
   ByteData packet;
 
@@ -459,8 +466,8 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     }
   }
 
-  int get port => this.packet.getUint16(portIndex);
-  set port(int value) => this.packet.setUint16(portIndex, value);
+  int get port => this.packet.getUint16(portIndex, Endian.little);
+  set port(int value) => this.packet.setUint16(portIndex, value, Endian.little);
 
   int get versionInfoH => this.packet.getUint8(versInfoHIndex);
   set versionInfoH(int value) => this.packet.setUint8(versInfoHIndex, value);
