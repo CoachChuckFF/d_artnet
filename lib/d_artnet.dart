@@ -475,7 +475,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set subSwitch(int value) => this.packet.setUint8(subSwitchIndex, value & subSwitchMask);
 
   int get universe => this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0];
-  set unitverse(int value){
+  set universe(int value){
     this.netSwitch = (value >> 16);
     this.subSwitch = (value >> 8);
     this.swOut[0] = (value >> 16);
