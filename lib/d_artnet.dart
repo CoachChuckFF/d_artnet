@@ -437,6 +437,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     if(packet != null){
       for(var i = 0; i < size; i++){
         this.packet.setUint8(i, packet[i]);
+        print(i.toString() + ":" + size.toString() + ":" + this.packet.lengthInBytes.toString());
       }
       return;
     }
