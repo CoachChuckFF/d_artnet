@@ -75,6 +75,7 @@ class ArtnetDataPacket implements ArtnetPacket{
     this.packet = new ByteData(size + defaultDataLength);
     if(packet != null){
       for(var i = 0; i < size + defaultDataLength; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -249,6 +250,7 @@ class ArtnetPollPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -436,6 +438,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1002,6 +1005,7 @@ class ArtnetAddressPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1242,6 +1246,7 @@ class ArtnetIpProgPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1412,6 +1417,7 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1547,6 +1553,7 @@ class ArtnetCommandPacket implements ArtnetPacket{
     this.packet = new ByteData(size + dataLength);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1664,6 +1671,7 @@ class ArtnetSyncPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1746,6 +1754,7 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1874,6 +1883,7 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1943,6 +1953,7 @@ class ArtnetBeepBeepPacket implements ArtnetPacket{
     this.packet = new ByteData(size);
     if(packet != null){
       for(var i = 0; i < size; i++){
+        if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
