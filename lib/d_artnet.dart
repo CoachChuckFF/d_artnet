@@ -41,6 +41,43 @@ abstract class ArtnetPacket {
   String toHexString();
 }
 
+String opCodeToString(int code){
+  switch(code){
+    case ArtnetDataPacket.opCode:
+      return "Data";
+    break;
+    case ArtnetPollPacket.opCode:
+      return "Poll";
+    break;
+    case ArtnetPollReplyPacket.opCode:
+      return "Poll Reply";
+    break;
+    case ArtnetAddressPacket.opCode:
+      return "Address";
+    break;
+    case ArtnetIpProgPacket.opCode:
+      return "Ip Prog";
+    break;
+    case ArtnetIpProgReplyPacket.opCode:
+      return "Ip Prog Reply";
+    break;
+    case ArtnetCommandPacket.opCode:
+      return "Command";
+    break;
+    case ArtnetSyncPacket.opCode:
+      return "Sync";
+    break;
+    case ArtnetFirmwareMasterPacket.opCode:
+      return "Firmware Master";
+    break;
+    case ArtnetFirmwareReplyPacket.opCode:
+      return "Firmware Reply";
+    break;
+    default:
+      return "Unkown";
+  }
+}
+
 int generateUUID32(int seed){
   var rnJesus = new Random(seed);
   int uuid = (rnJesus.nextInt(0xFF) << 24) & 0xFF000000;
