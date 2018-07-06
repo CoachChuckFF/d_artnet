@@ -195,21 +195,21 @@ class ArtnetDataPacket implements ArtnetPacket{
     }
   }
 
-  void setDmxvalueue(int address, int valueue){
+  void setDmxValue(int address, int value){
     if(address > defaultDataLength || address < 1){
       return;
     }
 
-    this.packet.setUint8(dataIndex + address - 1, valueue);
+    this.packet.setUint8(dataIndex + address - 1, value);
   }
 
-  void setDmxvalueues(List<int> addresses, int valueue){
+  void setDmxValues(List<int> addresses, int value){
 
     addresses.forEach((address){
       if(address > defaultDataLength || address < 1){
         return;
       }
-      this.packet.setUint8(dataIndex + address - 1, valueue);
+      this.packet.setUint8(dataIndex + address - 1, value);
     });
   }
 
