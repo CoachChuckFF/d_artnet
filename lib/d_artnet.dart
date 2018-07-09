@@ -1180,6 +1180,42 @@ class ArtnetAddressPacket implements ArtnetPacket{
 
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
+  static String addressCommandToString(int command){
+    String string = "";
+    switch(command){
+      case commandOptionNone: string += "No Command"; break;
+      case commandOptionCancelMerge: string += "Cancel Merge"; break;
+      case commandOptionLedNormal: string += "Set Indicator Mode to Normal"; break;
+      case commandOptionLedMute: string += "Set Indicator Mode to Mute"; break;
+      case commandOptionLedLocate: string += "Set Indicator Mode to Locate"; break;
+      case commandOptionResetRxFlags: string += "Reset Rx Flags"; break;
+      case commandOptionMergeLtp0: string += "Set Port 0 to Merge LTP Mode"; break;
+      case commandOptionMergeLtp1: string += "Set Port 1 to Merge LTP Mode"; break;
+      case commandOptionMergeLtp2: string += "Set Port 2 to Merge LTP Mode"; break;
+      case commandOptionMergeLtp3: string += "Set Port 3 to Merge LTP Mode"; break;
+      case commandOptionMergeHtp0: string += "Set Port 0 to Merge HTP Mode"; break;
+      case commandOptionMergeHtp1: string += "Set Port 1 to Merge HTP Mode"; break;
+      case commandOptionMergeHtp2: string += "Set Port 2 to Merge HTP Mode"; break;
+      case commandOptionMergeHtp3: string += "Set Port 3 to Merge HTP Mode"; break;
+      case commandOptionArtNetSel0: string += "Set Port 0 to Output DMX and RDM from Art-Net"; break;
+      case commandOptionArtNetSel1: string += "Set Port 1 to Output DMX and RDM from Art-Net"; break;
+      case commandOptionArtNetSel2: string += "Set Port 2 to Output DMX and RDM from Art-Net"; break;
+      case commandOptionArtNetSel3: string += "Set Port 3 to Output DMX and RDM from Art-Net"; break;
+      case commandOptionAcnSel0: string += "Set Port 0 to Output DMX from sACN and RDM from Art-Net"; break;
+      case commandOptionAcnSel1: string += "Set Port 1 to Output DMX from sACN and RDM from Art-Net"; break;
+      case commandOptionAcnSel2: string += "Set Port 2 to Output DMX from sACN and RDM from Art-Net"; break;
+      case commandOptionAcnSel3: string += "Set Port 3 to Output DMX from sACN and RDM from Art-Net"; break;
+      case commandOptionClearOp0: string += "Blackout Port 0 DMX Buffer"; break;
+      case commandOptionClearOp1: string += "Blackout Port 1 DMX Buffer"; break;
+      case commandOptionClearOp2: string += "Blackout Port 2 DMX Buffer"; break;
+      case commandOptionClearOp3: string += "Blackout Port 3 DMX Buffer"; break;
+      case 0x6969: string += "SOC was here"; break;
+      default: string += "Invalid Command"; break;
+    }
+
+    return string;
+  }
+
   @override
   String toString() {
     String string = "***$type***\n";
@@ -1203,36 +1239,7 @@ class ArtnetAddressPacket implements ArtnetPacket{
     string += "Long Name: " + this.longName + "\n";
     string += "Video Switch: " + this.swVideo.toString() + "\n";
     string += "Command: ";
-    switch(this.command){
-      case commandOptionNone: string += "No Command\n"; break;
-      case commandOptionCancelMerge: string += "Cancel Merge\n"; break;
-      case commandOptionLedNormal: string += "Set Indicator Mode to Normal\n"; break;
-      case commandOptionLedMute: string += "Set Indicator Mode to Mute\n"; break;
-      case commandOptionLedLocate: string += "Set Indicator Mode to Locate\n"; break;
-      case commandOptionResetRxFlags: string += "Reset Rx Flags\n"; break;
-      case commandOptionMergeLtp0: string += "Set Port 0 to Merge LTP Mode\n"; break;
-      case commandOptionMergeLtp1: string += "Set Port 1 to Merge LTP Mode\n"; break;
-      case commandOptionMergeLtp2: string += "Set Port 2 to Merge LTP Mode\n"; break;
-      case commandOptionMergeLtp3: string += "Set Port 3 to Merge LTP Mode\n"; break;
-      case commandOptionMergeHtp0: string += "Set Port 0 to Merge HTP Mode\n"; break;
-      case commandOptionMergeHtp1: string += "Set Port 1 to Merge HTP Mode\n"; break;
-      case commandOptionMergeHtp2: string += "Set Port 2 to Merge HTP Mode\n"; break;
-      case commandOptionMergeHtp3: string += "Set Port 3 to Merge HTP Mode\n"; break;
-      case commandOptionArtNetSel0: string += "Set Port 0 to Output DMX and RDM from Art-Net\n"; break;
-      case commandOptionArtNetSel1: string += "Set Port 1 to Output DMX and RDM from Art-Net\n"; break;
-      case commandOptionArtNetSel2: string += "Set Port 2 to Output DMX and RDM from Art-Net\n"; break;
-      case commandOptionArtNetSel3: string += "Set Port 3 to Output DMX and RDM from Art-Net\n"; break;
-      case commandOptionAcnSel0: string += "Set Port 0 to Output DMX from sACN and RDM from Art-Net\n"; break;
-      case commandOptionAcnSel1: string += "Set Port 1 to Output DMX from sACN and RDM from Art-Net\n"; break;
-      case commandOptionAcnSel2: string += "Set Port 2 to Output DMX from sACN and RDM from Art-Net\n"; break;
-      case commandOptionAcnSel3: string += "Set Port 3 to Output DMX from sACN and RDM from Art-Net\n"; break;
-      case commandOptionClearOp0: string += "Blackout Port 0 DMX Buffer\n"; break;
-      case commandOptionClearOp1: string += "Blackout Port 1 DMX Buffer\n"; break;
-      case commandOptionClearOp2: string += "Blackout Port 2 DMX Buffer\n"; break;
-      case commandOptionClearOp3: string += "Blackout Port 3 DMX Buffer\n"; break;
-      case 0x6969: string += "SOC was here\n"; break;
-      default: string += "Invalid Command\n"; break;
-    }
+    string += addressCommandToString(this.command) + "\n";
     return string;
   }
 
