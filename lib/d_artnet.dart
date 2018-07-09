@@ -1144,6 +1144,9 @@ class ArtnetAddressPacket implements ArtnetPacket{
     this.setProgramSwOutEnable(0, value);
   }
 
+  int get bindIndex => this.packet.getUint8(bindIndexIndex);
+  set bindIndex(int value) => this.packet.setUint8(bindIndexIndex, value);
+
   String get shortName => String.fromCharCodes(this.packet.buffer.asUint8List(shortNameIndex, shortNameSize));
   set shortName(String value){
     for(var i = 0; i < shortNameSize; i++){
