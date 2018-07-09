@@ -70,7 +70,7 @@ void main() {
   });
 
   test('creates artnet beep beep packet', (){
-    int uuid = generateUUID32(3);
+    int uuid = ArtnetGenerateBeepBeepUUID(3);
     final packet1 = new ArtnetBeepBeepPacket(uuid);
     print("Generated UUID: 0x" + uuid.toRadixString(16) + "\n");
     print("Packet UUID: 0x" + packet1.uuid.toRadixString(16) + "\n");
@@ -80,6 +80,6 @@ void main() {
 
   test('get opcode of artnet data packet', (){
     final packet1 = new ArtnetDataPacket();
-    print("Opcode: 0x" + getOpCode(packet1.udpPacket).toRadixString(16));
+    print("Opcode: 0x" + ArtnetGetOpCode(packet1.udpPacket).toRadixString(16));
   });
 }

@@ -3,33 +3,79 @@ library d_artnet;
 import 'dart:typed_data';
 import 'dart:math';
 
-//globals
-const protVer = 14;
-const opCodeIndex = 8;
+  const int ArtnetProtVer = 14;
+ const int ArtnetOpCodeIndex = 8;
 
-void copyIdtoBuffer(ByteData buffer, int opCode){
-  const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
-  for(var i = 0; i < id.length; i++){
-    buffer.setUint8(i, id[i]);
-  }
-  buffer.setUint16(opCodeIndex, opCode, Endian.little);
-}
-
-bool checkArtnetPacket(List<int> packet){
-  const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
-  for(var i = 0; i < id.length; i++){
-    if(packet[i] != id[i]){
-      return false;
+  void ArtnetCopyIdtoBuffer(ByteData buffer, int opCode){
+    const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+    for(var i = 0; i < id.length; i++){
+      buffer.setUint8(i, id[i]);
     }
-  } 
+    buffer.setUint16(ArtnetOpCodeIndex, opCode, Endian.little);
+  }
 
-  return true;
-}
+  bool ArtnetCheckPacket(List<int> packet){
+    const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+    for(var i = 0; i < id.length; i++){
+      if(packet[i] != id[i]){
+        return false;
+      }
+    } 
 
-int getOpCode(List<int> packet){
-  if(packet.length <= opCodeIndex + 1) return -1;
-  return packet[opCodeIndex + 1] << 8 | packet[opCodeIndex];
-}
+    return true;
+  }
+
+  int ArtnetGetOpCode(List<int> packet){
+    if(packet.length <= ArtnetOpCodeIndex + 1) return -1;
+    return packet[ArtnetOpCodeIndex + 1] << 8 | packet[ArtnetOpCodeIndex];
+  }
+
+  String ArtnetOpCodeToString(int code){
+    switch(code){
+      case ArtnetDataPacket.opCode:
+        return "Data";
+      break;
+      case ArtnetPollPacket.opCode:
+        return "Poll";
+      break;
+      case ArtnetPollReplyPacket.opCode:
+        return "Poll Reply";
+      break;
+      case ArtnetAddressPacket.opCode:
+        return "Address";
+      break;
+      case ArtnetIpProgPacket.opCode:
+        return "Ip Prog";
+      break;
+      case ArtnetIpProgReplyPacket.opCode:
+        return "Ip Prog Reply";
+      break;
+      case ArtnetCommandPacket.opCode:
+        return "Command";
+      break;
+      case ArtnetSyncPacket.opCode:
+        return "Sync";
+      break;
+      case ArtnetFirmwareMasterPacket.opCode:
+        return "Firmware Master";
+      break;
+      case ArtnetFirmwareReplyPacket.opCode:
+        return "Firmware Reply";
+      break;
+      default:
+        return "Unkown";
+    }
+  }
+
+  int ArtnetGenerateBeepBeepUUID(int seed){
+    var rnJesus = new Random(seed);
+    int uuid = (rnJesus.nextInt(0xFF) << 24) & 0xFF000000;
+    uuid |= (rnJesus.nextInt(0xFF) << 16) & 0x00FF0000;
+    uuid |= (rnJesus.nextInt(0xFF) << 8) & 0x0000FF00;
+    uuid |= (rnJesus.nextInt(0xFF)) & 0x000000FF;
+
+    return uuid;
+  }
 
 abstract class ArtnetPacket {
   static var type;
@@ -39,53 +85,7 @@ abstract class ArtnetPacket {
   List<int> get udpPacket;
 
   String toHexString();
-}
 
-String opCodeToString(int code){
-  switch(code){
-    case ArtnetDataPacket.opCode:
-      return "Data";
-    break;
-    case ArtnetPollPacket.opCode:
-      return "Poll";
-    break;
-    case ArtnetPollReplyPacket.opCode:
-      return "Poll Reply";
-    break;
-    case ArtnetAddressPacket.opCode:
-      return "Address";
-    break;
-    case ArtnetIpProgPacket.opCode:
-      return "Ip Prog";
-    break;
-    case ArtnetIpProgReplyPacket.opCode:
-      return "Ip Prog Reply";
-    break;
-    case ArtnetCommandPacket.opCode:
-      return "Command";
-    break;
-    case ArtnetSyncPacket.opCode:
-      return "Sync";
-    break;
-    case ArtnetFirmwareMasterPacket.opCode:
-      return "Firmware Master";
-    break;
-    case ArtnetFirmwareReplyPacket.opCode:
-      return "Firmware Reply";
-    break;
-    default:
-      return "Unkown";
-  }
-}
-
-int generateUUID32(int seed){
-  var rnJesus = new Random(seed);
-  int uuid = (rnJesus.nextInt(0xFF) << 24) & 0xFF000000;
-  uuid |= (rnJesus.nextInt(0xFF) << 16) & 0x00FF0000;
-  uuid |= (rnJesus.nextInt(0xFF) << 8) & 0x0000FF00;
-  uuid |= (rnJesus.nextInt(0xFF)) & 0x000000FF;
-
-  return uuid;
 }
 
 class ArtnetDataPacket implements ArtnetPacket{
@@ -95,9 +95,9 @@ class ArtnetDataPacket implements ArtnetPacket{
   static const defaultDataLength = 512;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const sequenceIndex = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const sequenceIndex = ArtnetProtVerLoIndex + 1;
   static const physicalIndex = sequenceIndex + 1;
   static const subUniIndex = physicalIndex + 1;
   static const netIndex = subUniIndex + 1;
@@ -119,24 +119,24 @@ class ArtnetDataPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
 
     //set length
     this.dmxLength = dmxLength;
     
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get sequence => this.packet.getUint8(sequenceIndex);
   set sequence(int value) => this.packet.setUint8(sequenceIndex, value);
@@ -221,8 +221,8 @@ class ArtnetDataPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Sequence: " + this.sequence.toString() + "\n";
     string += "Physical: " + this.physical.toString() + "\n";
     string += "Universe: " + this.universe.toString() + "\n";
@@ -264,9 +264,9 @@ class ArtnetPollPacket implements ArtnetPacket{
   static const opCode = 0x2000;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const talkToMeIndex = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const talkToMeIndex = ArtnetProtVerLoIndex + 1;
   static const priorityIndex = talkToMeIndex + 1;
 
   /* Masks */
@@ -294,20 +294,20 @@ class ArtnetPollPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get talkToMe => this.packet.getUint8(talkToMeIndex);
   set talkToMe(int value) => this.packet.setUint8(talkToMeIndex, value);
@@ -333,8 +333,8 @@ class ArtnetPollPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Talk to me: 0x" + this.talkToMe.toRadixString(16) + "\n";
     string += "*** VLC Transmission: " + ((this.talkToMeVlcTransmissionEnable) ? "Enabled" : "Disabled") + "\n";
     string += "*** Diagnostics: " + ((this.talkToMeDiagnosticsEnable) ? "Enabled" : "Disabled") + "\n";
@@ -379,7 +379,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const fillerSize = 26;
 
   /* Indexes */
-  static const ipAddressIndex = opCodeIndex + 2;
+  static const ipAddressIndex = ArtnetOpCodeIndex + 2;
   static const portIndex = ipAddressIndex + ipAddressSize;
   static const versInfoHIndex = portIndex + portSize;
   static const versInfoLIndex = versInfoHIndex + 1;
@@ -489,7 +489,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
   }
 
   List<int> get ip => this.packet.buffer.asUint8List(ipAddressIndex, ipAddressSize);
@@ -870,7 +870,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
     string += "Ip Address: " + this.ip[0].toString() + "." + this.ip[1].toString() + "." + this.ip[2].toString() + "." + this.ip[3].toString() + "\n";
     string += "Port: " + this.port.toString() + "\n";
     string += "Version: " + this.versionInfoH.toString() + "." + this.versionInfoL.toString() + "\n";
@@ -996,9 +996,9 @@ class ArtnetAddressPacket implements ArtnetPacket{
   static const swOutSize = 4;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const netSwitchIndex = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const netSwitchIndex = ArtnetProtVerLoIndex + 1;
   static const bindIndexIndex = netSwitchIndex + 1;
   static const shortNameIndex = bindIndexIndex + 1;
   static const longNameIndex = shortNameIndex + shortNameSize;
@@ -1056,20 +1056,20 @@ class ArtnetAddressPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get netSwitch => this.packet.getUint8(netSwitchIndex);
   set netSwitch(int value) => this.packet.setUint8(netSwitchIndex, value);
@@ -1220,8 +1220,8 @@ class ArtnetAddressPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() + " " + ((this.programUniverseEnable) ? "Set to Program" : "") + "\n";
     string += "*** Net Switch: " + (this.netSwitch & netSwitchMask).toString() + " " + ((this.programNetSwitchEnable) ? "Set to Program" : "") + "\n";
     string += "*** Sub Switch: " + (this.netSwitch & subSwitchMask).toString() + " " + ((this.programSubSwitchEnable) ? "Set to Program" : "") + "\n";
@@ -1268,9 +1268,9 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   static const spareSize = 8;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const filler1Index = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const filler1Index = ArtnetProtVerLoIndex + 1;
   static const filler2Index = filler1Index + 1;
   static const commandIndex = filler2Index + 1;
   static const filler4Index = commandIndex + 1; //because Art-Net 4 can't count
@@ -1307,20 +1307,20 @@ class ArtnetIpProgPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get command => this.packet.getUint8(commandIndex);
   set command(int value) => this.packet.setUint8(commandIndex, value);
@@ -1404,8 +1404,8 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Command: \n";
     string += "*** Programming: " + ((this.commandProgrammingEnable) ? "Enabled" : "Disabled") + "\n";
     string += "*** DHCP: " + ((this.commandDHCPEnable) ? "Enabled" : "Disabled") + "\n";
@@ -1444,9 +1444,9 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
   static const spareSize = 7;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const filler1Index = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const filler1Index = ArtnetProtVerLoIndex + 1;
   static const filler2Index = filler1Index + 1;
   static const filler3Index = filler2Index + 1;
   static const filler4Index = filler3Index + 1;
@@ -1478,20 +1478,20 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get progIpHi => this.packet.getUint8(progIpHiIndex);
   set progIpHi(int value) => this.packet.setUint8(progIpHiIndex, value);
@@ -1560,8 +1560,8 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Node Ip: " + this.progIp[0].toString() + "." + this.progIp[1].toString() + "." + this.progIp[2].toString() + "." + this.progIp[3].toString() + "\n";
     string += "Node Subnet: " + this.progSm[0].toString() + "." + this.progSm[1].toString() + "." + this.progSm[2].toString() + "." + this.progSm[3].toString() + "\n";
     string += "Node Port: " + this.progPort.toString() + "\n";
@@ -1592,9 +1592,9 @@ class ArtnetCommandPacket implements ArtnetPacket{
   static const defaultDataLength = 512;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const estaManHiIndex = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const estaManHiIndex = ArtnetProtVerLoIndex + 1;
   static const estaManLoIndex = estaManHiIndex + 1;
   static const lengthHiIndex = estaManLoIndex + 1;
   static const lengthLoIndex = lengthHiIndex + 1;
@@ -1614,23 +1614,23 @@ class ArtnetCommandPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
 
     //set size
     this.dataLength = dataLength;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get estaManLo => this.packet.getUint8(estaManLoIndex);
   set estaManLo(int value) => this.packet.setUint8(estaManLoIndex, value);
@@ -1675,8 +1675,8 @@ class ArtnetCommandPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "ESTA Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
     string += "Data Length: " + this.dataLength.toString() + "\n";
     string += "Data:";
@@ -1714,9 +1714,9 @@ class ArtnetSyncPacket implements ArtnetPacket{
   static const opCode = 0x5200;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const aux1Index = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const aux1Index = ArtnetProtVerLoIndex + 1;
   static const aux2Index = aux1Index + 1;
 
   ByteData packet;
@@ -1732,20 +1732,20 @@ class ArtnetSyncPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
@@ -1753,8 +1753,8 @@ class ArtnetSyncPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     return string;
   }
 
@@ -1781,9 +1781,9 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
   static const dataSize = 512;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const filler1Index = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const filler1Index = ArtnetProtVerLoIndex + 1;
   static const filler2Index = filler1Index + 1;
   static const blockTypeIndex = filler2Index + 1;
   static const blockIdIndex = blockTypeIndex + 1;
@@ -1815,20 +1815,20 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get blockType => this.packet.getUint8(blockTypeIndex);
   set blockType(int value) => this.packet.setUint8(blockTypeIndex, value);
@@ -1867,8 +1867,8 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Block Type: ";
     switch(this.blockType){
       case blockTypeOptionFirmFirst: string += "First Firmware Block\n"; break;
@@ -1919,9 +1919,9 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
   static const spareSize = 21;
 
   /* Indexes */
-  static const protVerHiIndex = opCodeIndex + 2;
-  static const protVerLoIndex = protVerHiIndex + 1;
-  static const filler1Index = protVerLoIndex + 1;
+  static const ArtnetProtVerHiIndex = ArtnetOpCodeIndex + 2;
+  static const ArtnetProtVerLoIndex = ArtnetProtVerHiIndex + 1;
+  static const filler1Index = ArtnetProtVerLoIndex + 1;
   static const filler2Index = filler1Index + 1;
   static const blockTypeIndex = filler2Index + 1;
   static const spareIndex = blockTypeIndex + 1;
@@ -1944,20 +1944,20 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
     }
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
 
     //set protocol version
-    this.protVersion = protVer;
+    this.ArtnetProtVersion = ArtnetProtVer;
   }
 
-  int get protVerHi => this.packet.getUint8(protVerHiIndex);
-  set protVerHi(int value) => this.packet.setUint8(protVerHiIndex, value);
+  int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
+  set ArtnetProtVerHi(int value) => this.packet.setUint8(ArtnetProtVerHiIndex, value);
 
-  int get protVerLo => this.packet.getUint8(protVerLoIndex);
-  set protVerLo(int value) => this.packet.setUint8(protVerLoIndex, value);
+  int get ArtnetProtVerLo => this.packet.getUint8(ArtnetProtVerLoIndex);
+  set ArtnetProtVerLo(int value) => this.packet.setUint8(ArtnetProtVerLoIndex, value);
 
-  int get protVersion => this.packet.getUint16(protVerHiIndex);
-  set protVersion(int value) => this.packet.setUint16(protVerHiIndex, value);
+  int get ArtnetProtVersion => this.packet.getUint16(ArtnetProtVerHiIndex);
+  set ArtnetProtVersion(int value) => this.packet.setUint16(ArtnetProtVerHiIndex, value);
 
   int get blockType => this.packet.getUint8(blockTypeIndex);
   set blockType(int value) => this.packet.setUint8(blockTypeIndex, value);
@@ -1968,8 +1968,8 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
   String toString() {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
-    string += "Opcode: 0x" + this.packet.getUint16(opCodeIndex).toRadixString(16) + "\n";
-    string += "Protocol Version: " + this.protVersion.toString() + "\n";
+    string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
+    string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Block Type: ";
     switch(this.blockType){
       case blockTypeOptionFirmBlockGood: string += "Last block received successfully\n"; break;
@@ -1999,7 +1999,7 @@ class ArtnetBeepBeepPacket implements ArtnetPacket{
   static const opCode = 0x6996;
 
   /* Indexes */
-  static const uuidIndex = opCodeIndex + 3;
+  static const uuidIndex = ArtnetOpCodeIndex + 3;
 
   ByteData packet;
 
@@ -2013,10 +2013,10 @@ class ArtnetBeepBeepPacket implements ArtnetPacket{
       return;
     }
 
-    this.uuid = (uuid == null) ? generateUUID32(3) : uuid;
+    this.uuid = (uuid == null) ? ArtnetGenerateBeepBeepUUID(3) : uuid;
 
     //set id
-    copyIdtoBuffer(this.packet, opCode);
+    ArtnetCopyIdtoBuffer(this.packet, opCode);
   }
 
   int get uuid => this.packet.getUint32(uuidIndex);
