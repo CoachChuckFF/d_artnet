@@ -630,8 +630,8 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   bool get isBlizzardDevice{
     return (this.packet.getUint8(blizzardLoveIndex + 0) == love[0] &&
             this.packet.getUint8(blizzardLoveIndex + 1) == love[1] &&
+            this.packet.getUint8(blizzardLoveIndex + 2) == love[2] &&
             this.packet.getUint8(blizzardLoveIndex + 3) == love[3] &&
-            this.packet.getUint8(blizzardLoveIndex + 4) == love[4] &&
             this.packet.getUint8(blizzardPrideIndex + 0) == pride[0] &&
             this.packet.getUint8(blizzardPrideIndex + 1) == pride[1] &&
             this.packet.getUint8(blizzardPrideIndex + 2) == pride[2] &&
