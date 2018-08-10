@@ -639,7 +639,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
             );
   }
 
-  int get blizzardType => (this.isBlizzardDevice) ? this.packet.getUint16(blizzardTypeIndex) : 0x0000;
+  int get blizzardType => (this.isBlizzardDevice) ? this.packet.getUint16(blizzardTypeIndex, Endian.little) : 0x0000;
 
   int get numPortsHi => this.packet.getUint8(numPortsHiIndex);
   set numPortsHi(int value) => this.packet.setUint8(numPortsHiIndex, value);
