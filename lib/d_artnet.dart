@@ -362,7 +362,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const type = "Artnet Poll Reply Packet";
   static const size = 234;
   static const opCode = 0x2100;
-  static const love = [0x42, 0x62, 0x62, 0x70]; //Blizzard Pro Proprietary Info
+  static const love = [0x42, 0x65, 0x65, 0x70]; //Blizzard Pro Proprietary Info
   static const pride = [0x53, 0x4F, 0x43, 0x00]; //Blizzard Pro Proprietary Info
 
   /* Sizes */
