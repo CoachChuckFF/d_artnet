@@ -4,10 +4,10 @@ import 'dart:typed_data';
 import 'dart:math';
 
   const int ArtnetProtVer = 14;
- const int ArtnetOpCodeIndex = 8;
+  const int ArtnetOpCodeIndex = 8;
 
   void ArtnetCopyIdtoBuffer(ByteData buffer, int opCode){
-    const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+    List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
     for(var i = 0; i < id.length; i++){
       buffer.setUint8(i, id[i]);
     }
@@ -15,7 +15,7 @@ import 'dart:math';
   }
 
   bool ArtnetCheckPacket(List<int> packet){
-    const List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+    List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
     for(var i = 0; i < id.length; i++){
       if(packet[i] != id[i]){
         return false;
@@ -109,9 +109,9 @@ class ArtnetDataPacket implements ArtnetPacket{
   Uint8List data;
 
   ArtnetDataPacket([List<int> packet, int dmxLength = defaultDataLength]){
-    this.packet = new ByteData(size + defaultDataLength);
+    this.packet = new ByteData(size + dmxLength);
     if(packet != null){
-      for(var i = 0; i < size + defaultDataLength; i++){
+      for(var i = 0; i < size + dmxLength; i++){
         if(packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
@@ -362,6 +362,8 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const type = "Artnet Poll Reply Packet";
   static const size = 234;
   static const opCode = 0x2100;
+  static const love = [0x42, 0x62, 0x62, 0x70]; //Blizzard Pro Proprietary Info
+  static const pride = [0x53, 0x4F, 0x43, 0x00]; //Blizzard Pro Proprietary Info
 
   /* Sizes */
   static const ipAddressSize = 4;
@@ -369,6 +371,11 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const shortNameSize = 18;
   static const longNameSize = 64;
   static const nodeReportSize = 64;
+  static const blizzardLoveSize = 4;
+  static const blizzardTypeSize = 2;
+  static const blizzardPrideSize = 4;
+  static const blizzardCodeSize = blizzardLoveSize + blizzardTypeSize + blizzardPrideSize;
+  static const blizzardReportSize = nodeReportSize - blizzardCodeSize;
   static const portTypesSize = 4;
   static const goodInputSize = 4;
   static const goodOutputSize = 4;
@@ -394,6 +401,9 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const shortNameIndex = estaManHiIndex + 1;
   static const longNameIndex = shortNameIndex + shortNameSize;
   static const nodeReportIndex = longNameIndex + longNameSize;
+  static const blizzardLoveIndex = nodeReportIndex + blizzardReportSize; //Blizzard Pro Proprietary Info
+  static const blizzardTypeIndex = blizzardLoveIndex + blizzardLoveSize; //Blizzard Pro Proprietary Info
+  static const blizzardPrideIndex = blizzardTypeIndex + blizzardTypeSize; //Blizzard Pro Proprietary Info
   static const numPortsHiIndex = nodeReportIndex + nodeReportSize;
   static const numPortsLoIndex = numPortsHiIndex + 1;
   static const portTypesIndex = numPortsLoIndex + 1;
@@ -615,6 +625,21 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     }
     this.packet.setUint8(nodeReportIndex + nodeReportSize - 1, 0); //Null terminate just in case
   }
+
+  //Blizzard Pro Proprietary Info
+  bool get isBlizzardDevice{
+    return (this.packet.getUint8(blizzardLoveIndex + 0) == love[0] &&
+            this.packet.getUint8(blizzardLoveIndex + 1) == love[1] &&
+            this.packet.getUint8(blizzardLoveIndex + 3) == love[3] &&
+            this.packet.getUint8(blizzardLoveIndex + 4) == love[4] &&
+            this.packet.getUint8(blizzardPrideIndex + 0) == pride[0] &&
+            this.packet.getUint8(blizzardPrideIndex + 1) == pride[1] &&
+            this.packet.getUint8(blizzardPrideIndex + 2) == pride[2] &&
+            this.packet.getUint8(blizzardPrideIndex + 3) == pride[3]
+            );
+  }
+
+  int get blizzardType => (this.isBlizzardDevice) ? this.packet.getUint8(blizzardTypeIndex) : 0x00;
 
   int get numPortsHi => this.packet.getUint8(numPortsHiIndex);
   set numPortsHi(int value) => this.packet.setUint8(numPortsHiIndex, value);
@@ -1773,7 +1798,7 @@ class ArtnetSyncPacket implements ArtnetPacket{
 
 class ArtnetFirmwareMasterPacket implements ArtnetPacket{
   static const type = "Artnet Firmware Master Packet";
-  static const size = 552;
+  static const size = 1064;
   static const opCode = 0xF200;
 
   /* Sizes */
@@ -1851,13 +1876,13 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
   int get firmwareLength => this.packet.getUint64(firmwareLength3Index);
   set firmwareLength(int value) => this.packet.setUint64(firmwareLength3Index, value);
 
-  List<int> get data => this.packet.buffer.asUint8List(dataIndex, dataSize);
+  List<int> get data => this.packet.buffer.asUint16List(dataIndex, dataSize);
   set data(List<int> value){
     for(var i = 0; i < dataSize; i++){
       if(value.length <= i){
         return;
       }
-      this.data[i] = value[i];
+      this.packet.setUint16(dataIndex, value[i]);
     }
   }
 

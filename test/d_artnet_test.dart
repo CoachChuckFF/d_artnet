@@ -1,5 +1,4 @@
 import 'package:test/test.dart';
-
 import 'package:d_artnet/d_artnet.dart';
 
 void main() {
