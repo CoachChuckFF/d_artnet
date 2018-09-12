@@ -451,8 +451,8 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const goodOutputIncludesTestPackets2Mask = 0x10;
   static const goodOutputIsMergingMask = 0x08;
   static const goodOutputShortDetectedMask = 0x04;
-  static const goodOutputMergeIsLTPMask = 0x04;
-  static const goodOutputProtocolMask = 0x04;
+  static const goodOutputMergeIsLTPMask = 0x02;
+  static const goodOutputProtocolMask = 0x01;
   static const status2IsSquawkingMask = 0x20;
   static const status2ProtocolSwitchableMask = 0x10;
   static const status215BitSupportMask = 0x08;

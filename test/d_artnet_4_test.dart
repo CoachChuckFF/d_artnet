@@ -1,5 +1,9 @@
-import 'package:test/test.dart';
-import 'package:d_artnet/d_artnet.dart';
+import '../lib/d_artnet_4.dart';
+
+void test(String name, Function callback){
+  print("Test: $name running...");
+  callback();
+}
 
 void main() {
   test('creates artnet data packet', () {
