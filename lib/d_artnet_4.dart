@@ -3,79 +3,79 @@ library d_artnet;
 import 'dart:typed_data';
 import 'dart:math';
 
-  const int ArtnetProtVer = 14;
-  const int ArtnetOpCodeIndex = 8;
+const int ArtnetProtVer = 14;
+const int ArtnetOpCodeIndex = 8;
 
-  void ArtnetCopyIdtoBuffer(ByteData buffer, int opCode){
-    List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
-    for(var i = 0; i < id.length; i++){
-      buffer.setUint8(i, id[i]);
-    }
-    buffer.setUint16(ArtnetOpCodeIndex, opCode, Endian.little);
+void ArtnetCopyIdtoBuffer(ByteData buffer, int opCode) {
+  List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+  for (var i = 0; i < id.length; i++) {
+    buffer.setUint8(i, id[i]);
   }
+  buffer.setUint16(ArtnetOpCodeIndex, opCode, Endian.little);
+}
 
-  bool ArtnetCheckPacket(List<int> packet){
-    List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
-    for(var i = 0; i < id.length; i++){
-      if(packet[i] != id[i]){
-        return false;
-      }
-    } 
-
-    return true;
-  }
-
-  int ArtnetGetOpCode(List<int> packet){
-    if(packet.length <= ArtnetOpCodeIndex + 1) return -1;
-    return packet[ArtnetOpCodeIndex + 1] << 8 | packet[ArtnetOpCodeIndex];
-  }
-
-  String ArtnetOpCodeToString(int code){
-    switch(code){
-      case ArtnetDataPacket.opCode:
-        return "Data";
-      break;
-      case ArtnetPollPacket.opCode:
-        return "Poll";
-      break;
-      case ArtnetPollReplyPacket.opCode:
-        return "Poll Reply";
-      break;
-      case ArtnetAddressPacket.opCode:
-        return "Address";
-      break;
-      case ArtnetIpProgPacket.opCode:
-        return "Ip Prog";
-      break;
-      case ArtnetIpProgReplyPacket.opCode:
-        return "Ip Prog Reply";
-      break;
-      case ArtnetCommandPacket.opCode:
-        return "Command";
-      break;
-      case ArtnetSyncPacket.opCode:
-        return "Sync";
-      break;
-      case ArtnetFirmwareMasterPacket.opCode:
-        return "Firmware Master";
-      break;
-      case ArtnetFirmwareReplyPacket.opCode:
-        return "Firmware Reply";
-      break;
-      default:
-        return "Unkown";
+bool ArtnetCheckPacket(List<int> packet) {
+  List<int> id = [0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00];
+  for (var i = 0; i < id.length; i++) {
+    if (packet[i] != id[i]) {
+      return false;
     }
   }
 
-  int ArtnetGenerateBeepBeepUUID(int seed){
-    var rnJesus = new Random(seed);
-    int uuid = (rnJesus.nextInt(0xFF) << 24) & 0xFF000000;
-    uuid |= (rnJesus.nextInt(0xFF) << 16) & 0x00FF0000;
-    uuid |= (rnJesus.nextInt(0xFF) << 8) & 0x0000FF00;
-    uuid |= (rnJesus.nextInt(0xFF)) & 0x000000FF;
+  return true;
+}
 
-    return uuid;
+int ArtnetGetOpCode(List<int> packet) {
+  if (packet.length <= ArtnetOpCodeIndex + 1) return -1;
+  return packet[ArtnetOpCodeIndex + 1] << 8 | packet[ArtnetOpCodeIndex];
+}
+
+String ArtnetOpCodeToString(int code) {
+  switch (code) {
+    case ArtnetDataPacket.opCode:
+      return "Data";
+      break;
+    case ArtnetPollPacket.opCode:
+      return "Poll";
+      break;
+    case ArtnetPollReplyPacket.opCode:
+      return "Poll Reply";
+      break;
+    case ArtnetAddressPacket.opCode:
+      return "Address";
+      break;
+    case ArtnetIpProgPacket.opCode:
+      return "Ip Prog";
+      break;
+    case ArtnetIpProgReplyPacket.opCode:
+      return "Ip Prog Reply";
+      break;
+    case ArtnetCommandPacket.opCode:
+      return "Command";
+      break;
+    case ArtnetSyncPacket.opCode:
+      return "Sync";
+      break;
+    case ArtnetFirmwareMasterPacket.opCode:
+      return "Firmware Master";
+      break;
+    case ArtnetFirmwareReplyPacket.opCode:
+      return "Firmware Reply";
+      break;
+    default:
+      return "Unkown";
   }
+}
+
+int ArtnetGenerateBeepBeepUUID(int seed) {
+  var rnJesus = new Random(seed);
+  int uuid = (rnJesus.nextInt(0xFF) << 24) & 0xFF000000;
+  uuid |= (rnJesus.nextInt(0xFF) << 16) & 0x00FF0000;
+  uuid |= (rnJesus.nextInt(0xFF) << 8) & 0x0000FF00;
+  uuid |= (rnJesus.nextInt(0xFF)) & 0x000000FF;
+
+  return uuid;
+}
 
 abstract class ArtnetPacket {
   static var type;
@@ -85,10 +85,9 @@ abstract class ArtnetPacket {
   List<int> get udpPacket;
 
   String toHexString();
-
 }
 
-class ArtnetDataPacket implements ArtnetPacket{
+class ArtnetDataPacket implements ArtnetPacket {
   static const type = "Artnet Data Packet";
   static const size = 18;
   static const opCode = 0x5000;
@@ -106,13 +105,12 @@ class ArtnetDataPacket implements ArtnetPacket{
   static const dataIndex = lengthIndex + 1;
 
   ByteData packet;
-  Uint8List data;
+  Uint8List data = Uint8List(0);
 
-  ArtnetDataPacket([List<int> packet, int dmxLength = defaultDataLength]){
-    this.packet = new ByteData(size + dmxLength);
-    if(packet != null){
-      for(var i = 0; i < size + dmxLength; i++){
-        if(packet.length <= i) return;
+  ArtnetDataPacket([List<int>? packet, int dmxLength = defaultDataLength]) : packet = new ByteData(size + dmxLength) {
+    if (packet != null) {
+      for (var i = 0; i < size + dmxLength; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -126,7 +124,6 @@ class ArtnetDataPacket implements ArtnetPacket{
 
     //set length
     this.dmxLength = dmxLength;
-    
   }
 
   int get ArtnetProtVerHi => this.packet.getUint8(ArtnetProtVerHiIndex);
@@ -151,7 +148,7 @@ class ArtnetDataPacket implements ArtnetPacket{
   set net(int value) => this.packet.setUint8(netIndex, value);
 
   int get universe => ((this.net << 8) & 0x7F00) | this.subUni & 0xFF;
-  set universe(int value){
+  set universe(int value) {
     this.subUni = value & 0xFF;
     this.net = (value >> 8) & 0x7F;
   }
@@ -163,8 +160,8 @@ class ArtnetDataPacket implements ArtnetPacket{
   set lengthLo(int value) => this.packet.setUint8(lengthIndex, value);
 
   int get dmxLength => this.packet.getUint16(lengthHiIndex);
-  set dmxLength(int value){
-    if(value > defaultDataLength || value < 0){
+  set dmxLength(int value) {
+    if (value > defaultDataLength || value < 0) {
       return;
     }
 
@@ -172,41 +169,40 @@ class ArtnetDataPacket implements ArtnetPacket{
   }
 
   void blackout() {
-    for(var i = 0; i < defaultDataLength; i++){
+    for (var i = 0; i < defaultDataLength; i++) {
       this.packet.setUint8(dataIndex + i, 0x00);
     }
   }
 
   void whiteout() {
-    for(var i = 0; i < defaultDataLength; i++){
+    for (var i = 0; i < defaultDataLength; i++) {
       this.packet.setUint8(dataIndex + i, 0xFF);
     }
   }
 
   void copyDmxToPacket(ByteData data) {
-    for(var i = 0; i < defaultDataLength; i++){
+    for (var i = 0; i < defaultDataLength; i++) {
       this.packet.setUint8(dataIndex + i, data.getUint8(i));
     }
   }
 
   void copyDmxFromPacket(ByteData data) {
-    for(var i = 0; i < defaultDataLength; i++){
+    for (var i = 0; i < defaultDataLength; i++) {
       data.setUint8(i, this.packet.getUint8(dataIndex + i));
     }
   }
 
-  void setDmxValue(int address, int value){
-    if(address > defaultDataLength || address < 1){
+  void setDmxValue(int address, int value) {
+    if (address > defaultDataLength || address < 1) {
       return;
     }
 
     this.packet.setUint8(dataIndex + address - 1, value);
   }
 
-  void setDmxValues(List<int> addresses, int value){
-
-    addresses.forEach((address){
-      if(address > defaultDataLength || address < 1){
+  void setDmxValues(List<int> addresses, int value) {
+    addresses.forEach((address) {
+      if (address > defaultDataLength || address < 1) {
         return;
       }
       this.packet.setUint8(dataIndex + address - 1, value);
@@ -230,12 +226,12 @@ class ArtnetDataPacket implements ArtnetPacket{
     string += "*** Sub Universe: " + this.subUni.toString() + "\n";
     string += "Data Length: " + this.dmxLength.toString() + "\n";
     string += "Data:";
-    for(var i = 1; i <= this.dmxLength; i++){
-      if(((i-1) % 16) == 0){
-        string +="\n*** ";
+    for (var i = 1; i <= this.dmxLength; i++) {
+      if (((i - 1) % 16) == 0) {
+        string += "\n*** ";
       }
-      String tempString = " " + (i).toString() + ":" + this.dmx[i-1].toString() + " ";
-      while(tempString.length < 9){
+      String tempString = " " + (i).toString() + ":" + this.dmx[i - 1].toString() + " ";
+      while (tempString.length < 9) {
         tempString += " ";
       }
       string += tempString;
@@ -245,20 +241,19 @@ class ArtnetDataPacket implements ArtnetPacket{
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < this.udpPacket.length; i++){
+    for (var i = 0; i < this.udpPacket.length; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetPollPacket implements ArtnetPacket{
+class ArtnetPollPacket implements ArtnetPacket {
   static const type = "Artnet Poll Packet";
   static const size = 14;
   static const opCode = 0x2000;
@@ -281,13 +276,12 @@ class ArtnetPollPacket implements ArtnetPacket{
   static const talkToMePollReplyOptionOnlyInResponse = 0;
   static const talkToMePollReplyOptionOnChange = 1;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetPollPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetPollPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -313,16 +307,23 @@ class ArtnetPollPacket implements ArtnetPacket{
   set talkToMe(int value) => this.packet.setUint8(talkToMeIndex, value);
 
   bool get talkToMeVlcTransmissionEnable => ((this.talkToMe & talkToMeVlcTransmissionEnableMask) == 0);
-  set talkToMeVlcTransmissionEnable(bool value) => (value) ? this.talkToMe &= ~talkToMeVlcTransmissionEnableMask : this.talkToMe |= talkToMeVlcTransmissionEnableMask;
+  set talkToMeVlcTransmissionEnable(bool value) => (value)
+      ? this.talkToMe &= ~talkToMeVlcTransmissionEnableMask
+      : this.talkToMe |= talkToMeVlcTransmissionEnableMask;
 
   bool get talkToMeDiagnosticsEnable => ((this.talkToMe & talkToMeDiagnosticsEnableMask) != 0);
-  set talkToMeDiagnosticsEnable(bool value) => (value) ? this.talkToMe |= talkToMeDiagnosticsEnableMask : this.talkToMe &= ~talkToMeDiagnosticsEnableMask;
+  set talkToMeDiagnosticsEnable(bool value) =>
+      (value) ? this.talkToMe |= talkToMeDiagnosticsEnableMask : this.talkToMe &= ~talkToMeDiagnosticsEnableMask;
 
   int get talkToMeDiagnosticsTransmission => (this.talkToMe & talkToMeDiagnosticsTransmissionMask) >> 3;
-  set talkToMeDiagnosticsTransmission(int value) => (value == talkToMeDiagnosticsTransmissionOptionUnicast) ? this.talkToMe |= talkToMeDiagnosticsTransmissionMask : this.talkToMe &= ~talkToMeDiagnosticsTransmissionMask;
+  set talkToMeDiagnosticsTransmission(int value) => (value == talkToMeDiagnosticsTransmissionOptionUnicast)
+      ? this.talkToMe |= talkToMeDiagnosticsTransmissionMask
+      : this.talkToMe &= ~talkToMeDiagnosticsTransmissionMask;
 
   int get talkToMePollReplyOption => (this.talkToMe & talkToMePollReplyOptionMask) >> 1;
-  set talkToMePollReplyOption(int value) => (value == talkToMePollReplyOptionOnChange) ? this.talkToMe |= talkToMePollReplyOptionMask : this.talkToMe &= ~talkToMePollReplyOptionMask;
+  set talkToMePollReplyOption(int value) => (value == talkToMePollReplyOptionOnChange)
+      ? this.talkToMe |= talkToMePollReplyOptionMask
+      : this.talkToMe &= ~talkToMePollReplyOptionMask;
 
   int get priority => this.packet.getUint8(priorityIndex);
   set priority(int value) => this.packet.setUint8(priorityIndex, value);
@@ -338,24 +339,31 @@ class ArtnetPollPacket implements ArtnetPacket{
     string += "Talk to me: 0x" + this.talkToMe.toRadixString(16) + "\n";
     string += "*** VLC Transmission: " + ((this.talkToMeVlcTransmissionEnable) ? "Enabled" : "Disabled") + "\n";
     string += "*** Diagnostics: " + ((this.talkToMeDiagnosticsEnable) ? "Enabled" : "Disabled") + "\n";
-    string += "*** Diagnostics are " + ((this.talkToMeDiagnosticsTransmission == talkToMeDiagnosticsTransmissionOptionBroadcast) ? "broadcast" : "unicast") + "\n";
-    string += "*** Send art poll reply " + ((this.talkToMePollReplyOption == talkToMePollReplyOptionOnChange) ? "on config change" : "in response to art poll") + "\n";
+    string += "*** Diagnostics are " +
+        ((this.talkToMeDiagnosticsTransmission == talkToMeDiagnosticsTransmissionOptionBroadcast)
+            ? "broadcast"
+            : "unicast") +
+        "\n";
+    string += "*** Send art poll reply " +
+        ((this.talkToMePollReplyOption == talkToMePollReplyOptionOnChange)
+            ? "on config change"
+            : "in response to art poll") +
+        "\n";
     string += "Priority: " + this.priority.toString() + "\n";
 
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
 class ArtnetPollReplyPacket implements ArtnetPacket {
@@ -486,13 +494,12 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   static const styleOptionStConfig = 0x05;
   static const styleOptionStVisual = 0x06;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetPollReplyPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetPollReplyPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -503,10 +510,10 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   List<int> get ip => this.packet.buffer.asUint8List(ipAddressIndex, ipAddressSize);
-  set ip(List<int> value){
-    for(var i = 0; i < ipAddressSize; i++){
-      if(value.length <= i){
-        this.packet.setUint8(ipAddressIndex + i, 0);    
+  set ip(List<int> value) {
+    for (var i = 0; i < ipAddressSize; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(ipAddressIndex + i, 0);
       } else {
         this.packet.setUint8(ipAddressIndex + i, value[i]);
       }
@@ -529,7 +536,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set subSwitch(int value) => this.packet.setUint8(subSwitchIndex, value & subSwitchMask);
 
   int get universe => this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0];
-  set universe(int value){
+  set universe(int value) {
     this.netSwitch = (value >> 16);
     this.subSwitch = (value >> 8);
     this.swOut[0] = (value >> 16);
@@ -543,7 +550,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
 
   int get oem => (this.oemHi << 8) & 0xFF00 | this.oemLo & 0xFF;
   set oem(int value) {
-    this.oemHi = (value >> 8);  
+    this.oemHi = (value >> 8);
     this.oemLo = value & 0xFF;
   }
 
@@ -554,7 +561,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set status1(int value) => this.packet.setUint8(status1Index, value);
 
   int get status1IndicatorState => (this.status1 & status1IndicatorStateMask) >> 6;
-  set status1IndicatorState(int value){
+  set status1IndicatorState(int value) {
     //clear value
     this.status1 &= ~status1IndicatorStateMask;
     //set value
@@ -562,7 +569,7 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   int get status1ProgrammingAuthority => (this.status1 & status1ProgrammingAuthorityMask) >> 4;
-  set status1ProgrammingAuthority(int value){
+  set status1ProgrammingAuthority(int value) {
     //clear value
     this.status1 &= ~status1ProgrammingAuthorityMask;
     //set value
@@ -570,13 +577,17 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   int get status1FirmwareBoot => (this.status1 & status1ProgrammingAuthorityMask) >> 2;
-  set status1FirmwareBoot(int value) => (value == status1FirmwareBootOptionRom) ? this.status1 |= status1FirmwareBootMask : this.status1 &= ~status1FirmwareBootMask;
+  set status1FirmwareBoot(int value) => (value == status1FirmwareBootOptionRom)
+      ? this.status1 |= status1FirmwareBootMask
+      : this.status1 &= ~status1FirmwareBootMask;
 
   bool get status1RdmCapable => ((this.status1 & status1RdmCapableMask) != 0);
-  set status1RdmCapable(bool value) => (value) ? this.status1 |= status1RdmCapableMask : this.status1 &= ~status1RdmCapableMask;
-  
+  set status1RdmCapable(bool value) =>
+      (value) ? this.status1 |= status1RdmCapableMask : this.status1 &= ~status1RdmCapableMask;
+
   bool get status1UbeaPresent => ((this.status1 & status1UbeaPresentMask) != 0);
-  set status1UbeaPresent(bool value) => (value) ? this.status1 |= status1UbeaPresentMask : this.status1 &= ~status1UbeaPresentMask;
+  set status1UbeaPresent(bool value) =>
+      (value) ? this.status1 |= status1UbeaPresentMask : this.status1 &= ~status1UbeaPresentMask;
 
   int get estaManLo => this.packet.getUint8(estaManLoIndex);
   set estaManLo(int value) => this.packet.setUint8(estaManLoIndex, value);
@@ -585,15 +596,15 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set estaManHi(int value) => this.packet.setUint8(estaManHiIndex, value);
 
   int get estaMan => this.estaManHi << 8 | this.estaManLo;
-  set estaMan(int value){
+  set estaMan(int value) {
     this.estaManHi = value >> 8;
     this.estaManLo = value & 0xFF;
   }
 
   String get shortName => String.fromCharCodes(this.packet.buffer.asUint8List(shortNameIndex, shortNameSize));
-  set shortName(String value){
-    for(var i = 0; i < shortNameSize; i++){
-      if(value.length <= i){
+  set shortName(String value) {
+    for (var i = 0; i < shortNameSize; i++) {
+      if (value.length <= i) {
         this.packet.setUint8(shortNameIndex + i, 0);
       } else {
         this.packet.setInt8(shortNameIndex + i, value.codeUnitAt(i));
@@ -603,9 +614,9 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   String get longName => String.fromCharCodes(this.packet.buffer.asUint8List(longNameIndex, longNameSize));
-  set longName(String value){
-    for(var i = 0; i < longNameSize; i++){
-      if(value.length <= i){
+  set longName(String value) {
+    for (var i = 0; i < longNameSize; i++) {
+      if (value.length <= i) {
         this.packet.setUint8(longNameIndex + i, 0);
       } else {
         this.packet.setInt8(longNameIndex + i, value.codeUnitAt(i));
@@ -615,9 +626,9 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   String get nodeReport => String.fromCharCodes(packet.buffer.asUint8List(nodeReportIndex, nodeReportSize));
-  set nodeReport(String value){
-    for(var i = 0; i < nodeReportSize; i++){
-      if(value.length <= i){
+  set nodeReport(String value) {
+    for (var i = 0; i < nodeReportSize; i++) {
+      if (value.length <= i) {
         this.packet.setUint8(nodeReportIndex + i, 0);
       } else {
         this.packet.setInt8(nodeReportIndex + i, value.codeUnitAt(i));
@@ -627,16 +638,15 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   //Blizzard Pro Proprietary Info
-  bool get isBlizzardDevice{
+  bool get isBlizzardDevice {
     return (this.packet.getUint8(blizzardLoveIndex + 0) == love[0] &&
-            this.packet.getUint8(blizzardLoveIndex + 1) == love[1] &&
-            this.packet.getUint8(blizzardLoveIndex + 2) == love[2] &&
-            this.packet.getUint8(blizzardLoveIndex + 3) == love[3] &&
-            this.packet.getUint8(blizzardPrideIndex + 0) == pride[0] &&
-            this.packet.getUint8(blizzardPrideIndex + 1) == pride[1] &&
-            this.packet.getUint8(blizzardPrideIndex + 2) == pride[2] &&
-            this.packet.getUint8(blizzardPrideIndex + 3) == pride[3]
-            );
+        this.packet.getUint8(blizzardLoveIndex + 1) == love[1] &&
+        this.packet.getUint8(blizzardLoveIndex + 2) == love[2] &&
+        this.packet.getUint8(blizzardLoveIndex + 3) == love[3] &&
+        this.packet.getUint8(blizzardPrideIndex + 0) == pride[0] &&
+        this.packet.getUint8(blizzardPrideIndex + 1) == pride[1] &&
+        this.packet.getUint8(blizzardPrideIndex + 2) == pride[2] &&
+        this.packet.getUint8(blizzardPrideIndex + 3) == pride[3]);
   }
 
   int get blizzardType => (this.isBlizzardDevice) ? this.packet.getUint16(blizzardTypeIndex, Endian.little) : 0x0000;
@@ -651,30 +661,37 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set numPorts(int value) => this.packet.setUint16(numPortsHiIndex, value);
 
   List<int> get portTypes => this.packet.buffer.asUint8List(portTypesIndex, portTypesSize);
-  void setPortType(int index, int value){
-    if(index >= portTypesSize || index < 0){
+  void setPortType(int index, int value) {
+    if (index >= portTypesSize || index < 0) {
       return;
     }
     this.packet.setUint8(portTypesIndex + index, value);
   }
 
-  bool getPortTypesOutputArtnetAble(int index) => (index >= portTypesSize) ? false : ((this.portTypes[index] & portTypesOutputArtnetAbleMask) != 0x00);
-  void setPortTypesOutputArtnetAble(int index, bool value){
-    if(index >= portTypesSize) return;
+  bool getPortTypesOutputArtnetAble(int index) =>
+      (index >= portTypesSize) ? false : ((this.portTypes[index] & portTypesOutputArtnetAbleMask) != 0x00);
+  void setPortTypesOutputArtnetAble(int index, bool value) {
+    if (index >= portTypesSize) return;
 
-    (value) ? this.portTypes[index] |= portTypesOutputArtnetAbleMask : this.portTypes[index] &= ~portTypesOutputArtnetAbleMask;
-  } 
+    (value)
+        ? this.portTypes[index] |= portTypesOutputArtnetAbleMask
+        : this.portTypes[index] &= ~portTypesOutputArtnetAbleMask;
+  }
 
-  bool getPortTypesInputArtnetAble(int index) => (index >= portTypesSize) ? false : ((this.portTypes[index] & portTypesInputArtnetAbleMask) != 0x00);
-  void setPortTypesInputArtnetAble(int index, bool value){
-    if(index >= portTypesSize) return;
-    
-    (value) ? this.portTypes[index] |= portTypesInputArtnetAbleMask : this.portTypes[index] &= ~portTypesInputArtnetAbleMask;
-  } 
+  bool getPortTypesInputArtnetAble(int index) =>
+      (index >= portTypesSize) ? false : ((this.portTypes[index] & portTypesInputArtnetAbleMask) != 0x00);
+  void setPortTypesInputArtnetAble(int index, bool value) {
+    if (index >= portTypesSize) return;
 
-  int getPortTypesProtocol(int index) => (index >= portTypesSize) ? 0x00 : (this.portTypes[index] & portTypesProtocolMask);
-  void setPortTypesProtocol(int index, int value){
-    if(index >= portTypesSize) return;
+    (value)
+        ? this.portTypes[index] |= portTypesInputArtnetAbleMask
+        : this.portTypes[index] &= ~portTypesInputArtnetAbleMask;
+  }
+
+  int getPortTypesProtocol(int index) =>
+      (index >= portTypesSize) ? 0x00 : (this.portTypes[index] & portTypesProtocolMask);
+  void setPortTypesProtocol(int index, int value) {
+    if (index >= portTypesSize) return;
 
     //clear value
     this.portTypes[index] &= ~portTypesProtocolMask;
@@ -683,131 +700,163 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   List<int> get goodInput => this.packet.buffer.asUint8List(goodInputIndex, goodInputSize);
-  void setGoodInput(int index, int value){
-    if(index >= goodInputSize || index < 0){
+  void setGoodInput(int index, int value) {
+    if (index >= goodInputSize || index < 0) {
       return;
     }
     this.packet.setUint8(goodInputIndex + index, value);
   }
 
-  bool getGoodInputDataReceived(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputDataReceivedMask) != 0x00);
-  void setGoodInputDataReceived(int index, bool value){
-    if(index >= goodInputSize) return;
+  bool getGoodInputDataReceived(int index) =>
+      (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputDataReceivedMask) != 0x00);
+  void setGoodInputDataReceived(int index, bool value) {
+    if (index >= goodInputSize) return;
 
     (value) ? this.goodInput[index] |= goodInputDataReceivedMask : this.goodInput[index] &= ~goodInputDataReceivedMask;
-  } 
+  }
 
-  bool getGoodInputIncludesTestPackets1(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesTestPackets1Mask) != 0x00);
-  void setGoodInputIncludesTestPackets1(int index, bool value){
-    if(index >= goodInputSize) return;
+  bool getGoodInputIncludesTestPackets1(int index) =>
+      (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesTestPackets1Mask) != 0x00);
+  void setGoodInputIncludesTestPackets1(int index, bool value) {
+    if (index >= goodInputSize) return;
 
-    (value) ? this.goodInput[index] |= goodInputIncludesTestPackets1Mask : this.goodInput[index] &= ~goodInputIncludesTestPackets1Mask;
-  } 
+    (value)
+        ? this.goodInput[index] |= goodInputIncludesTestPackets1Mask
+        : this.goodInput[index] &= ~goodInputIncludesTestPackets1Mask;
+  }
 
-  bool getGoodInputIncludesSIPs(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesSIPsMask) != 0x00);
-  void setGoodInputIncludesSIPs(int index, bool value){
-    if(index >= goodInputSize) return;
+  bool getGoodInputIncludesSIPs(int index) =>
+      (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesSIPsMask) != 0x00);
+  void setGoodInputIncludesSIPs(int index, bool value) {
+    if (index >= goodInputSize) return;
 
     (value) ? this.goodInput[index] |= goodInputIncludesSIPsMask : this.goodInput[index] &= ~goodInputIncludesSIPsMask;
-  } 
+  }
 
-  bool getGoodInputIncludesTestPackets2(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesTestPackets2Mask) != 0x00);
-  void setGoodInputIncludesTestPackets2(int index, bool value){
-    if(index >= goodInputSize) return;
+  bool getGoodInputIncludesTestPackets2(int index) =>
+      (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputIncludesTestPackets2Mask) != 0x00);
+  void setGoodInputIncludesTestPackets2(int index, bool value) {
+    if (index >= goodInputSize) return;
 
-    (value) ? this.goodInput[index] |= goodInputIncludesTestPackets2Mask : this.goodInput[index] &= ~goodInputIncludesTestPackets2Mask;
-  } 
+    (value)
+        ? this.goodInput[index] |= goodInputIncludesTestPackets2Mask
+        : this.goodInput[index] &= ~goodInputIncludesTestPackets2Mask;
+  }
 
-  bool getGoodInputInputDisable(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputInputDisableMask) != 0x00);
-  void setGoodInputInputDisable(int index, bool value){
-    if(index >= goodInputSize) return;
+  bool getGoodInputInputDisable(int index) =>
+      (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputInputDisableMask) != 0x00);
+  void setGoodInputInputDisable(int index, bool value) {
+    if (index >= goodInputSize) return;
 
     (value) ? this.goodInput[index] |= goodInputInputDisableMask : this.goodInput[index] &= ~goodInputInputDisableMask;
-  } 
+  }
 
-  bool getGoodInputReceiveErrorDetected(int index) => (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputReceiveErrorDetectedMask) != 0x00);
-  void setGoodInputReceiveErrorDetected(int index, bool value){
-    if(index >= goodInputSize) return;
+  bool getGoodInputReceiveErrorDetected(int index) =>
+      (index >= goodInputSize) ? false : ((this.goodInput[index] & goodInputReceiveErrorDetectedMask) != 0x00);
+  void setGoodInputReceiveErrorDetected(int index, bool value) {
+    if (index >= goodInputSize) return;
 
-    (value) ? this.goodInput[index] |= goodInputReceiveErrorDetectedMask : this.goodInput[index] &= ~goodInputReceiveErrorDetectedMask;
-  } 
+    (value)
+        ? this.goodInput[index] |= goodInputReceiveErrorDetectedMask
+        : this.goodInput[index] &= ~goodInputReceiveErrorDetectedMask;
+  }
 
   List<int> get goodOutput => this.packet.buffer.asUint8List(goodOutputIndex, goodOutputSize);
-  void setGoodOutput(int index, int value){
-    if(index >= goodOutputSize || index < 0){
+  void setGoodOutput(int index, int value) {
+    if (index >= goodOutputSize || index < 0) {
       return;
     }
     this.packet.setUint8(goodOutputIndex + index, value);
   }
 
-  bool getGoodOutputDataTransmiting(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputDataTransmitingMask) != 0x00);
-  void setGoodOutputDataTransmiting(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputDataTransmiting(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputDataTransmitingMask) != 0x00);
+  void setGoodOutputDataTransmiting(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
-    (value) ? this.goodOutput[index] |= goodOutputDataTransmitingMask : this.goodOutput[index] &= ~goodOutputDataTransmitingMask;
-  } 
+    (value)
+        ? this.goodOutput[index] |= goodOutputDataTransmitingMask
+        : this.goodOutput[index] &= ~goodOutputDataTransmitingMask;
+  }
 
-  bool getGoodOutputIncludesTestPackets1(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesTestPackets1Mask) != 0x00);
-  void setGoodOutputIncludesTestPackets1(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputIncludesTestPackets1(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesTestPackets1Mask) != 0x00);
+  void setGoodOutputIncludesTestPackets1(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
-    (value) ? this.goodOutput[index] |= goodOutputIncludesTestPackets1Mask : this.goodOutput[index] &= ~goodOutputIncludesTestPackets1Mask;
-  } 
+    (value)
+        ? this.goodOutput[index] |= goodOutputIncludesTestPackets1Mask
+        : this.goodOutput[index] &= ~goodOutputIncludesTestPackets1Mask;
+  }
 
-  bool getGoodOutputIncludesSIPs(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesSIPsMask) != 0x00);
-  void setGoodOutputIncludesSIPs(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputIncludesSIPs(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesSIPsMask) != 0x00);
+  void setGoodOutputIncludesSIPs(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
-    (value) ? this.goodOutput[index] |= goodOutputIncludesSIPsMask : this.goodOutput[index] &= ~goodOutputIncludesSIPsMask;
-  } 
+    (value)
+        ? this.goodOutput[index] |= goodOutputIncludesSIPsMask
+        : this.goodOutput[index] &= ~goodOutputIncludesSIPsMask;
+  }
 
-  bool getGoodOutputIncludesTestPackets2(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesTestPackets2Mask) != 0x00);
-  void setGoodOutputIncludesTestPackets2(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputIncludesTestPackets2(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIncludesTestPackets2Mask) != 0x00);
+  void setGoodOutputIncludesTestPackets2(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
-    (value) ? this.goodOutput[index] |= goodOutputIncludesTestPackets2Mask : this.goodOutput[index] &= ~goodOutputIncludesTestPackets2Mask;
-  } 
+    (value)
+        ? this.goodOutput[index] |= goodOutputIncludesTestPackets2Mask
+        : this.goodOutput[index] &= ~goodOutputIncludesTestPackets2Mask;
+  }
 
-  bool getGoodOutputIsMerging(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIsMergingMask) != 0x00);
-  void setGoodOutputIsMerging(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputIsMerging(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputIsMergingMask) != 0x00);
+  void setGoodOutputIsMerging(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
     (value) ? this.goodOutput[index] |= goodOutputIsMergingMask : this.goodOutput[index] &= ~goodOutputIsMergingMask;
-  } 
+  }
 
-  bool getGoodOutputShortDetected(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputShortDetectedMask) != 0x00);
-  void setGoodOutputShortDetected(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputShortDetected(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputShortDetectedMask) != 0x00);
+  void setGoodOutputShortDetected(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
-    (value) ? this.goodOutput[index] |= goodOutputShortDetectedMask : this.goodOutput[index] &= ~goodOutputShortDetectedMask;
-  } 
+    (value)
+        ? this.goodOutput[index] |= goodOutputShortDetectedMask
+        : this.goodOutput[index] &= ~goodOutputShortDetectedMask;
+  }
 
-  bool getGoodOutputMergeIsLTP(int index) => (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputMergeIsLTPMask) != 0x00);
-  void setGoodOutputMergeIsLTP(int index, bool value){
-    if(index >= goodOutputSize) return;
+  bool getGoodOutputMergeIsLTP(int index) =>
+      (index >= goodOutputSize) ? false : ((this.goodOutput[index] & goodOutputMergeIsLTPMask) != 0x00);
+  void setGoodOutputMergeIsLTP(int index, bool value) {
+    if (index >= goodOutputSize) return;
 
     (value) ? this.goodOutput[index] |= goodOutputMergeIsLTPMask : this.goodOutput[index] &= ~goodOutputMergeIsLTPMask;
-  } 
+  }
 
   /* TODO make this an int */
-  int getGoodOutputProtocol(int index) => (index >= goodOutputSize) ? 0x00 : (this.goodOutput[index] & goodOutputProtocolMask);
-  void setGoodOutputProtocol(int index, int value){
-    if(index >= goodOutputSize) return;
+  int getGoodOutputProtocol(int index) =>
+      (index >= goodOutputSize) ? 0x00 : (this.goodOutput[index] & goodOutputProtocolMask);
+  void setGoodOutputProtocol(int index, int value) {
+    if (index >= goodOutputSize) return;
 
-    (value == goodOutputProtocolOptionSacn) ? this.goodOutput[index] |= goodOutputProtocolMask : this.goodOutput[index] &= ~goodOutputProtocolMask;
-  } 
+    (value == goodOutputProtocolOptionSacn)
+        ? this.goodOutput[index] |= goodOutputProtocolMask
+        : this.goodOutput[index] &= ~goodOutputProtocolMask;
+  }
 
   List<int> get swIn => this.packet.buffer.asUint8List(swInIndex, swInSize);
-  void setSwIn(int index, int value){
-    if(index >= swInSize || index < 0){
+  void setSwIn(int index, int value) {
+    if (index >= swInSize || index < 0) {
       return;
     }
     this.packet.setUint8(swInIndex + index, value & ioSwitchMask);
   }
 
   List<int> get swOut => this.packet.buffer.asUint8List(swOutIndex, swOutSize);
-  void setSwOut(int index, int value){
-    if(index >= swOutSize || index < 0){
+  void setSwOut(int index, int value) {
+    if (index >= swOutSize || index < 0) {
       return;
     }
     this.packet.setUint8(swOutIndex + index, value & ioSwitchMask);
@@ -844,10 +893,10 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set macLo(int value) => this.packet.setUint8(macLoIndex, value);
 
   List<int> get mac => this.packet.buffer.asUint8List(macHiIndex, 6);
-  set mac(List<int> value){
-    for(var i = 0; i < 6; i++){
-      if(value.length <= i){
-        this.packet.setUint8(macHiIndex + i, 0);    
+  set mac(List<int> value) {
+    for (var i = 0; i < 6; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(macHiIndex + i, 0);
       } else {
         this.packet.setUint8(macHiIndex + i, value[i]);
       }
@@ -855,10 +904,10 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   }
 
   List<int> get bindIp => this.packet.buffer.asUint8List(bindIpIndex, bindIpSize);
-  set bindIp(List<int> value){
-    for(var i = 0; i < bindIpSize; i++){
-      if(value.length <= i){
-        this.packet.setUint8(bindIpIndex + i, 0);    
+  set bindIp(List<int> value) {
+    for (var i = 0; i < bindIpSize; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(bindIpIndex + i, 0);
       } else {
         this.packet.setUint8(bindIpIndex + i, value[i]);
       }
@@ -872,22 +921,29 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
   set status2(int value) => this.packet.setUint8(status2Index, value);
 
   bool get status2IsSquawking => ((this.status2 & status2IsSquawkingMask) != 0x00);
-  set status2IsSquawking(bool value) => (value) ? this.status2 |= status2IsSquawkingMask : this.status2 &= ~status2IsSquawkingMask;
+  set status2IsSquawking(bool value) =>
+      (value) ? this.status2 |= status2IsSquawkingMask : this.status2 &= ~status2IsSquawkingMask;
 
   bool get status2ProtocolSwitchable => ((this.status2 & status2ProtocolSwitchableMask) != 0x00);
-  set status2ProtocolSwitchable(bool value) => (value) ? this.status2 |= status2ProtocolSwitchableMask : this.status2 &= ~status2ProtocolSwitchableMask;
+  set status2ProtocolSwitchable(bool value) =>
+      (value) ? this.status2 |= status2ProtocolSwitchableMask : this.status2 &= ~status2ProtocolSwitchableMask;
 
   bool get status215BitSupport => ((this.status2 & status215BitSupportMask) != 0x00);
-  set status215BitSupport(bool value) => (value) ? this.status2 |= status215BitSupportMask : this.status2 &= ~status215BitSupportMask;
+  set status215BitSupport(bool value) =>
+      (value) ? this.status2 |= status215BitSupportMask : this.status2 &= ~status215BitSupportMask;
 
   bool get status2DHCPCapable => ((this.status2 & status2DHCPCapableMask) != 0x00);
-  set status2DHCPCapable(bool value) => (value) ? this.status2 |= status2DHCPCapableMask : this.status2 &= ~status2DHCPCapableMask;
+  set status2DHCPCapable(bool value) =>
+      (value) ? this.status2 |= status2DHCPCapableMask : this.status2 &= ~status2DHCPCapableMask;
 
   bool get status2IpIsSetManually => ((this.status2 & status2IpIsSetManuallyMask) == 0x00);
-  set status2IpIsSetManually(bool value) => (value) ? this.status2 &= ~status2IpIsSetManuallyMask : this.status2 |= status2IpIsSetManuallyMask;
+  set status2IpIsSetManually(bool value) =>
+      (value) ? this.status2 &= ~status2IpIsSetManuallyMask : this.status2 |= status2IpIsSetManuallyMask;
 
   bool get status2HasWebConfigurationSupport => ((this.status2 & status2HasWebConfigurationSupportMask) != 0x00);
-  set status2HasWebConfigurationSupport(bool value) => (value) ? this.status2 |= status2HasWebConfigurationSupportMask : this.status2 &= ~status2HasWebConfigurationSupportMask;
+  set status2HasWebConfigurationSupport(bool value) => (value)
+      ? this.status2 |= status2HasWebConfigurationSupportMask
+      : this.status2 &= ~status2HasWebConfigurationSupportMask;
 
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
@@ -896,10 +952,19 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     String string = "***$type***\n";
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
-    string += "Ip Address: " + this.ip[0].toString() + "." + this.ip[1].toString() + "." + this.ip[2].toString() + "." + this.ip[3].toString() + "\n";
+    string += "Ip Address: " +
+        this.ip[0].toString() +
+        "." +
+        this.ip[1].toString() +
+        "." +
+        this.ip[2].toString() +
+        "." +
+        this.ip[3].toString() +
+        "\n";
     string += "Port: " + this.port.toString() + "\n";
     string += "Version: " + this.versionInfoH.toString() + "." + this.versionInfoL.toString() + "\n";
-    string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() + "\n";
+    string +=
+        "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() + "\n";
     string += "*** Net Switch: " + this.netSwitch.toString() + "\n";
     string += "*** Sub Switch: " + this.subSwitch.toString() + "\n";
     string += "*** Input Switch:\n";
@@ -916,19 +981,35 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     string += "Ubea Version: " + this.ubeaVersion.toString() + "\n";
     string += "Status 1: 0x" + this.status1.toRadixString(16) + "\n";
     string += "*** Indicator State: ";
-    switch(this.status1IndicatorState){
-      case status1IndicatorStateOptionLocate: string += "Locate Mode\n"; break;
-      case status1IndicatorStateOptionMute: string += "Mute Mode\n"; break;
-      case status1IndicatorStateOptionNormal: string += "Normal Mode\n"; break;
-      default: string += "Unkown Mode\n"; break;
+    switch (this.status1IndicatorState) {
+      case status1IndicatorStateOptionLocate:
+        string += "Locate Mode\n";
+        break;
+      case status1IndicatorStateOptionMute:
+        string += "Mute Mode\n";
+        break;
+      case status1IndicatorStateOptionNormal:
+        string += "Normal Mode\n";
+        break;
+      default:
+        string += "Unkown Mode\n";
+        break;
     }
     string += "*** Programming Authority: ";
-    switch(this.status1ProgrammingAuthority){
-      case status1ProgrammingAuthorityOptionNetwork: string += "All or part of Port-Address programmed by network or web browser\n"; break;
-      case status1ProgrammingAuthorityOptionPanel: string += "All Port-Address set by front panel controls.\n"; break;
-      default: string += "Port-Address programming authority unknown\n"; break;
+    switch (this.status1ProgrammingAuthority) {
+      case status1ProgrammingAuthorityOptionNetwork:
+        string += "All or part of Port-Address programmed by network or web browser\n";
+        break;
+      case status1ProgrammingAuthorityOptionPanel:
+        string += "All Port-Address set by front panel controls.\n";
+        break;
+      default:
+        string += "Port-Address programming authority unknown\n";
+        break;
     }
-    string += "*** Firmware Boot: " + ((this.status1FirmwareBoot == status1FirmwareBootOptionRom) ? "ROM boot" : "Normal boot (from flash)") + "\n";
+    string += "*** Firmware Boot: " +
+        ((this.status1FirmwareBoot == status1FirmwareBootOptionRom) ? "ROM boot" : "Normal boot (from flash)") +
+        "\n";
     string += "*** RDM Capable: " + ((this.status1RdmCapable) ? "Capable" : "Not Capable") + "\n";
     string += "*** UBEA Present: " + ((this.status1UbeaPresent) ? "Present" : "Not Present or Currupt") + "\n";
     string += "ESTA Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
@@ -937,42 +1018,69 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     string += "Node Report: " + this.nodeReport + "\n";
     string += "Number of Ports: " + this.numPorts.toString() + "\n";
     string += "Port Types:\n";
-    for(var i = 0; i < portTypesSize; i++){
+    for (var i = 0; i < portTypesSize; i++) {
       string += "*** " + i.toString() + ":\n";
       string += "*** *** Artnet Output: " + ((this.getPortTypesInputArtnetAble(i)) ? "Enabled" : "Disabled") + "\n";
       string += "*** *** Artnet Input: " + ((this.getPortTypesOutputArtnetAble(i)) ? "Enabled" : "Disabled") + "\n";
       string += "*** *** Protocol: ";
-      switch(this.getPortTypesProtocol(i)){
-        case portTypesProtocolOptionDMX: string += "DMX 512\n"; break;
-        case portTypesProtocolOptionDMX: string += "MIDI\n"; break;
-        case portTypesProtocolOptionDMX: string += "Avab\n"; break;
-        case portTypesProtocolOptionDMX: string += "Colortran CMX\n"; break;
-        case portTypesProtocolOptionDMX: string += "ADB 62.5\n"; break;
-        case portTypesProtocolOptionDMX: string += "Art-Net\n"; break;
-        default: string += "Unkown Protocol\n"; break;
+      switch (this.getPortTypesProtocol(i)) {
+        case portTypesProtocolOptionDMX:
+          string += "DMX 512\n";
+          break;
+        case portTypesProtocolOptionDMX:
+          string += "MIDI\n";
+          break;
+        case portTypesProtocolOptionDMX:
+          string += "Avab\n";
+          break;
+        case portTypesProtocolOptionDMX:
+          string += "Colortran CMX\n";
+          break;
+        case portTypesProtocolOptionDMX:
+          string += "ADB 62.5\n";
+          break;
+        case portTypesProtocolOptionDMX:
+          string += "Art-Net\n";
+          break;
+        default:
+          string += "Unkown Protocol\n";
+          break;
       }
     }
     string += "Good Input:\n";
-    for(var i = 0; i < goodInputSize; i++){
+    for (var i = 0; i < goodInputSize; i++) {
       string += "*** " + i.toString() + ":\n";
       string += "*** *** Data Received: " + ((this.getGoodInputDataReceived(i)) ? "True" : "False") + "\n";
-      string += "*** *** Channel Includes DMX Test Packets 1: " + ((this.getGoodInputIncludesTestPackets1(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 1: " +
+          ((this.getGoodInputIncludesTestPackets1(i)) ? "True" : "False") +
+          "\n";
       string += "*** *** Channel Includes DMX SIP's: " + ((this.getGoodInputIncludesSIPs(i)) ? "True" : "False") + "\n";
-      string += "*** *** Channel Includes DMX Test Packets 2: " + ((this.getGoodInputIncludesTestPackets2(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 2: " +
+          ((this.getGoodInputIncludesTestPackets2(i)) ? "True" : "False") +
+          "\n";
       string += "*** *** Input: " + ((this.getGoodInputInputDisable(i)) ? "Disabled" : "Enabled") + "\n";
-      string += "*** *** Receive Errors: " + ((this.getGoodInputReceiveErrorDetected(i)) ? "Detected" : "Not Detected") + "\n";
+      string += "*** *** Receive Errors: " +
+          ((this.getGoodInputReceiveErrorDetected(i)) ? "Detected" : "Not Detected") +
+          "\n";
     }
     string += "Good Ouput:\n";
-    for(var i = 0; i < goodOutputSize; i++){
+    for (var i = 0; i < goodOutputSize; i++) {
       string += "*** " + i.toString() + ":\n";
       string += "*** *** Data Transmitting: " + ((this.getGoodOutputDataTransmiting(i)) ? "True" : "False") + "\n";
-      string += "*** *** Channel Includes DMX Test Packets 1: " + ((this.getGoodOutputIncludesTestPackets1(i)) ? "True" : "False") + "\n";
-      string += "*** *** Channel Includes DMX SIP's: " + ((this.getGoodOutputIncludesSIPs(i)) ? "True" : "False") + "\n";
-      string += "*** *** Channel Includes DMX Test Packets 2: " + ((this.getGoodOutputIncludesTestPackets2(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 1: " +
+          ((this.getGoodOutputIncludesTestPackets1(i)) ? "True" : "False") +
+          "\n";
+      string +=
+          "*** *** Channel Includes DMX SIP's: " + ((this.getGoodOutputIncludesSIPs(i)) ? "True" : "False") + "\n";
+      string += "*** *** Channel Includes DMX Test Packets 2: " +
+          ((this.getGoodOutputIncludesTestPackets2(i)) ? "True" : "False") +
+          "\n";
       string += "*** *** Merge: " + ((this.getGoodOutputIsMerging(i)) ? "Disabled" : "Enabled") + "\n";
       string += "*** *** DMX Short: " + ((this.getGoodOutputShortDetected(i)) ? "Detected" : "Not Detected") + "\n";
       string += "*** *** Merge is LTP: " + ((this.getGoodOutputMergeIsLTP(i)) ? "True" : "False") + "\n";
-      string += "*** *** Protocol: " + ((this.getGoodOutputProtocol(i) == goodOutputProtocolOptionSacn) ? "sACN" : "Art-Net") + "\n";
+      string += "*** *** Protocol: " +
+          ((this.getGoodOutputProtocol(i) == goodOutputProtocolOptionSacn) ? "sACN" : "Art-Net") +
+          "\n";
     }
     string += "Video Switch: 0x" + this.swVideo.toRadixString(16) + "\n";
     string += "Macro Switch: 0x" + this.swMacro.toRadixString(16) + "\n";
@@ -984,32 +1092,44 @@ class ArtnetPollReplyPacket implements ArtnetPacket {
     string += this.mac2.toRadixString(16) + ".";
     string += this.mac1.toRadixString(16) + ".";
     string += this.macLo.toRadixString(16) + "\n";
-    string += "Bind Ip: " + this.bindIp[0].toString() + "." + this.bindIp[1].toString() + "." + this.bindIp[2].toString() + "." + this.bindIp[3].toString() + "\n";
+    string += "Bind Ip: " +
+        this.bindIp[0].toString() +
+        "." +
+        this.bindIp[1].toString() +
+        "." +
+        this.bindIp[2].toString() +
+        "." +
+        this.bindIp[3].toString() +
+        "\n";
     string += "Bind Index: " + this.bindIndex.toString() + "\n";
     string += "Status 2: 0x" + this.status2.toRadixString(16) + "\n";
     string += "*** Node is Squawking: " + ((this.status2IsSquawking) ? "True" : "False") + "\n";
-    string += "*** Node is Protocol Switchable (Art-Net - sACN): " + ((this.status2ProtocolSwitchable) ? "True" : "False") + "\n";
-    string += "*** Node Supports 15 Bit Port-Address (Art-Net 3 or 4): " + ((this.status215BitSupport) ? "True" : "False") + "\n";
+    string += "*** Node is Protocol Switchable (Art-Net - sACN): " +
+        ((this.status2ProtocolSwitchable) ? "True" : "False") +
+        "\n";
+    string += "*** Node Supports 15 Bit Port-Address (Art-Net 3 or 4): " +
+        ((this.status215BitSupport) ? "True" : "False") +
+        "\n";
     string += "*** Node Supports DHCP: " + ((this.status2DHCPCapable) ? "True" : "False") + "\n";
     string += "*** Node's ip is set " + ((this.status2IpIsSetManually) ? "manually" : "by DHCP") + "\n";
-    string += "*** Node Supports Web Configurations: " + ((this.status2HasWebConfigurationSupport) ? "True" : "False") + "\n";
+    string +=
+        "*** Node Supports Web Configurations: " + ((this.status2HasWebConfigurationSupport) ? "True" : "False") + "\n";
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetAddressPacket implements ArtnetPacket{
+class ArtnetAddressPacket implements ArtnetPacket {
   static const type = "Artnet Address Packet";
   static const size = 107;
   static const opCode = 0x6000;
@@ -1067,14 +1187,12 @@ class ArtnetAddressPacket implements ArtnetPacket{
   static const commandOptionClearOp2 = 0x92;
   static const commandOptionClearOp3 = 0x93;
 
+  ByteData packet = ByteData(size);
 
-  ByteData packet;
-
-  ArtnetAddressPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetAddressPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1100,31 +1218,34 @@ class ArtnetAddressPacket implements ArtnetPacket{
   set netSwitch(int value) => this.packet.setUint8(netSwitchIndex, value);
 
   bool get programNetSwitchEnable => (this.netSwitch & programSwitchMask) != 0x00;
-  set programNetSwitchEnable(bool value) => (value) ? this.netSwitch |= programSwitchMask : this.netSwitch &= ~programSwitchMask; 
+  set programNetSwitchEnable(bool value) =>
+      (value) ? this.netSwitch |= programSwitchMask : this.netSwitch &= ~programSwitchMask;
 
   int get subSwitch => this.packet.getUint8(subSwitchIndex);
   set subSwitch(int value) => this.packet.setUint8(subSwitchIndex, value);
 
   bool get programSubSwitchEnable => (this.subSwitch & programSwitchMask) != 0x00;
-  set programSubSwitchEnable(bool value) => (value) ? this.subSwitch |= programSwitchMask : this.subSwitch &= ~programSwitchMask; 
+  set programSubSwitchEnable(bool value) =>
+      (value) ? this.subSwitch |= programSwitchMask : this.subSwitch &= ~programSwitchMask;
 
   List<int> get swIn => this.packet.buffer.asUint8List(swInIndex, swInSize);
-  void setSwIn(int index, int value){
-    if(index >= swInSize || index < 0){
+  void setSwIn(int index, int value) {
+    if (index >= swInSize || index < 0) {
       return;
     }
     this.packet.setUint8(swInIndex + index, value & ioSwitchMask);
   }
 
-  bool getProgramSwInEnable(int index){
-    if(index >= swInSize || index < 0){
+  bool getProgramSwInEnable(int index) {
+    if (index >= swInSize || index < 0) {
       return false;
     }
 
     return ((this.swIn[index] & programSwitchMask) != 0x00);
   }
-  void setProgramSwInEnable(int index, bool value){
-    if(index >= swInSize || index < 0){
+
+  void setProgramSwInEnable(int index, bool value) {
+    if (index >= swInSize || index < 0) {
       return;
     }
 
@@ -1132,38 +1253,39 @@ class ArtnetAddressPacket implements ArtnetPacket{
   }
 
   List<int> get swOut => this.packet.buffer.asUint8List(swOutIndex, swOutSize);
-  void setSwOut(int index, int value){
-    if(index >= swInSize || index < 0){
+  void setSwOut(int index, int value) {
+    if (index >= swInSize || index < 0) {
       return;
     }
     this.packet.setUint8(swOutIndex + index, value & ioSwitchMask);
   }
 
-  bool getProgramSwOutEnable(int index){
-    if(index >= swOutSize || index < 0){
+  bool getProgramSwOutEnable(int index) {
+    if (index >= swOutSize || index < 0) {
       return false;
     }
 
     return ((this.swOut[index] & programSwitchMask) != 0x00);
   }
-  void setProgramSwOutEnable(int index, bool value){
-    if(index >= swOutSize || index < 0){
+
+  void setProgramSwOutEnable(int index, bool value) {
+    if (index >= swOutSize || index < 0) {
       return;
     }
 
     (value) ? this.swOut[index] |= programSwitchMask : this.swOut[index] &= ~programSwitchMask;
   }
 
-
   int get universe => (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]);
-  set universe(int value){
+  set universe(int value) {
     this.netSwitch = value >> 16 & netSwitchMask;
     this.subSwitch = value >> 8 & subSwitchMask;
     this.swOut[0] = value & ioSwitchMask;
   }
 
-  bool get programUniverseEnable => (this.programNetSwitchEnable || this.programSubSwitchEnable || this.getProgramSwOutEnable(0));
-  set programUniverseEnable(bool value){
+  bool get programUniverseEnable =>
+      (this.programNetSwitchEnable || this.programSubSwitchEnable || this.getProgramSwOutEnable(0));
+  set programUniverseEnable(bool value) {
     this.programNetSwitchEnable = value;
     this.programSubSwitchEnable = value;
     this.setProgramSwOutEnable(0, value);
@@ -1173,9 +1295,9 @@ class ArtnetAddressPacket implements ArtnetPacket{
   set bindIndex(int value) => this.packet.setUint8(bindIndexIndex, value);
 
   String get shortName => String.fromCharCodes(this.packet.buffer.asUint8List(shortNameIndex, shortNameSize));
-  set shortName(String value){
-    for(var i = 0; i < shortNameSize; i++){
-      if(value.length <= i){
+  set shortName(String value) {
+    for (var i = 0; i < shortNameSize; i++) {
+      if (value.length <= i) {
         this.packet.setUint8(shortNameIndex + i, 0);
       } else {
         this.packet.setInt8(shortNameIndex + i, value.codeUnitAt(i));
@@ -1185,9 +1307,9 @@ class ArtnetAddressPacket implements ArtnetPacket{
   }
 
   String get longName => String.fromCharCodes(this.packet.buffer.asUint8List(longNameIndex, longNameSize));
-  set longName(String value){
-    for(var i = 0; i < longNameSize; i++){
-      if(value.length <= i){
+  set longName(String value) {
+    for (var i = 0; i < longNameSize; i++) {
+      if (value.length <= i) {
         this.packet.setUint8(longNameIndex + i, 0);
       } else {
         this.packet.setInt8(longNameIndex + i, value.codeUnitAt(i));
@@ -1202,40 +1324,95 @@ class ArtnetAddressPacket implements ArtnetPacket{
   int get command => this.packet.getUint8(commandIndex);
   set command(int value) => this.packet.setUint8(commandIndex, value);
 
-
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
-  static String addressCommandToString(int command){
+  static String addressCommandToString(int command) {
     String string = "";
-    switch(command){
-      case commandOptionNone: string += "No Command"; break;
-      case commandOptionCancelMerge: string += "Cancel Merge"; break;
-      case commandOptionLedNormal: string += "Set Indicator Mode to Normal"; break;
-      case commandOptionLedMute: string += "Set Indicator Mode to Mute"; break;
-      case commandOptionLedLocate: string += "Set Indicator Mode to Locate"; break;
-      case commandOptionResetRxFlags: string += "Reset Rx Flags"; break;
-      case commandOptionMergeLtp0: string += "Set Port 0 to Merge LTP Mode"; break;
-      case commandOptionMergeLtp1: string += "Set Port 1 to Merge LTP Mode"; break;
-      case commandOptionMergeLtp2: string += "Set Port 2 to Merge LTP Mode"; break;
-      case commandOptionMergeLtp3: string += "Set Port 3 to Merge LTP Mode"; break;
-      case commandOptionMergeHtp0: string += "Set Port 0 to Merge HTP Mode"; break;
-      case commandOptionMergeHtp1: string += "Set Port 1 to Merge HTP Mode"; break;
-      case commandOptionMergeHtp2: string += "Set Port 2 to Merge HTP Mode"; break;
-      case commandOptionMergeHtp3: string += "Set Port 3 to Merge HTP Mode"; break;
-      case commandOptionArtNetSel0: string += "Set Port 0 to Output DMX and RDM from Art-Net"; break;
-      case commandOptionArtNetSel1: string += "Set Port 1 to Output DMX and RDM from Art-Net"; break;
-      case commandOptionArtNetSel2: string += "Set Port 2 to Output DMX and RDM from Art-Net"; break;
-      case commandOptionArtNetSel3: string += "Set Port 3 to Output DMX and RDM from Art-Net"; break;
-      case commandOptionAcnSel0: string += "Set Port 0 to Output DMX from sACN and RDM from Art-Net"; break;
-      case commandOptionAcnSel1: string += "Set Port 1 to Output DMX from sACN and RDM from Art-Net"; break;
-      case commandOptionAcnSel2: string += "Set Port 2 to Output DMX from sACN and RDM from Art-Net"; break;
-      case commandOptionAcnSel3: string += "Set Port 3 to Output DMX from sACN and RDM from Art-Net"; break;
-      case commandOptionClearOp0: string += "Blackout Port 0 DMX Buffer"; break;
-      case commandOptionClearOp1: string += "Blackout Port 1 DMX Buffer"; break;
-      case commandOptionClearOp2: string += "Blackout Port 2 DMX Buffer"; break;
-      case commandOptionClearOp3: string += "Blackout Port 3 DMX Buffer"; break;
-      case 0x6969: string += "SOC was here"; break;
-      default: string += "Invalid Command"; break;
+    switch (command) {
+      case commandOptionNone:
+        string += "No Command";
+        break;
+      case commandOptionCancelMerge:
+        string += "Cancel Merge";
+        break;
+      case commandOptionLedNormal:
+        string += "Set Indicator Mode to Normal";
+        break;
+      case commandOptionLedMute:
+        string += "Set Indicator Mode to Mute";
+        break;
+      case commandOptionLedLocate:
+        string += "Set Indicator Mode to Locate";
+        break;
+      case commandOptionResetRxFlags:
+        string += "Reset Rx Flags";
+        break;
+      case commandOptionMergeLtp0:
+        string += "Set Port 0 to Merge LTP Mode";
+        break;
+      case commandOptionMergeLtp1:
+        string += "Set Port 1 to Merge LTP Mode";
+        break;
+      case commandOptionMergeLtp2:
+        string += "Set Port 2 to Merge LTP Mode";
+        break;
+      case commandOptionMergeLtp3:
+        string += "Set Port 3 to Merge LTP Mode";
+        break;
+      case commandOptionMergeHtp0:
+        string += "Set Port 0 to Merge HTP Mode";
+        break;
+      case commandOptionMergeHtp1:
+        string += "Set Port 1 to Merge HTP Mode";
+        break;
+      case commandOptionMergeHtp2:
+        string += "Set Port 2 to Merge HTP Mode";
+        break;
+      case commandOptionMergeHtp3:
+        string += "Set Port 3 to Merge HTP Mode";
+        break;
+      case commandOptionArtNetSel0:
+        string += "Set Port 0 to Output DMX and RDM from Art-Net";
+        break;
+      case commandOptionArtNetSel1:
+        string += "Set Port 1 to Output DMX and RDM from Art-Net";
+        break;
+      case commandOptionArtNetSel2:
+        string += "Set Port 2 to Output DMX and RDM from Art-Net";
+        break;
+      case commandOptionArtNetSel3:
+        string += "Set Port 3 to Output DMX and RDM from Art-Net";
+        break;
+      case commandOptionAcnSel0:
+        string += "Set Port 0 to Output DMX from sACN and RDM from Art-Net";
+        break;
+      case commandOptionAcnSel1:
+        string += "Set Port 1 to Output DMX from sACN and RDM from Art-Net";
+        break;
+      case commandOptionAcnSel2:
+        string += "Set Port 2 to Output DMX from sACN and RDM from Art-Net";
+        break;
+      case commandOptionAcnSel3:
+        string += "Set Port 3 to Output DMX from sACN and RDM from Art-Net";
+        break;
+      case commandOptionClearOp0:
+        string += "Blackout Port 0 DMX Buffer";
+        break;
+      case commandOptionClearOp1:
+        string += "Blackout Port 1 DMX Buffer";
+        break;
+      case commandOptionClearOp2:
+        string += "Blackout Port 2 DMX Buffer";
+        break;
+      case commandOptionClearOp3:
+        string += "Blackout Port 3 DMX Buffer";
+        break;
+      case 0x6969:
+        string += "SOC was here";
+        break;
+      default:
+        string += "Invalid Command";
+        break;
     }
 
     return string;
@@ -1247,19 +1424,63 @@ class ArtnetAddressPacket implements ArtnetPacket{
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
-    string += "Port-Address (Universe): " + (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() + " " + ((this.programUniverseEnable) ? "Set to Program" : "") + "\n";
-    string += "*** Net Switch: " + (this.netSwitch & netSwitchMask).toString() + " " + ((this.programNetSwitchEnable) ? "Set to Program" : "") + "\n";
-    string += "*** Sub Switch: " + (this.netSwitch & subSwitchMask).toString() + " " + ((this.programSubSwitchEnable) ? "Set to Program" : "") + "\n";
+    string += "Port-Address (Universe): " +
+        (this.netSwitch << 16 | this.subSwitch << 8 | this.swOut[0]).toString() +
+        " " +
+        ((this.programUniverseEnable) ? "Set to Program" : "") +
+        "\n";
+    string += "*** Net Switch: " +
+        (this.netSwitch & netSwitchMask).toString() +
+        " " +
+        ((this.programNetSwitchEnable) ? "Set to Program" : "") +
+        "\n";
+    string += "*** Sub Switch: " +
+        (this.netSwitch & subSwitchMask).toString() +
+        " " +
+        ((this.programSubSwitchEnable) ? "Set to Program" : "") +
+        "\n";
     string += "*** Input Switch:\n";
-    string += "*** *** 0: " + (this.swIn[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(0)) ? "Set to Program" : "") + "\n";
-    string += "*** *** 1: " + (this.swIn[1] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(1)) ? "Set to Program" : "") + "\n";
-    string += "*** *** 2: " + (this.swIn[2] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(2)) ? "Set to Program" : "") + "\n";
-    string += "*** *** 3: " + (this.swIn[3] & ioSwitchMask).toString() + " " + ((this.getProgramSwInEnable(3)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 0: " +
+        (this.swIn[0] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwInEnable(0)) ? "Set to Program" : "") +
+        "\n";
+    string += "*** *** 1: " +
+        (this.swIn[1] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwInEnable(1)) ? "Set to Program" : "") +
+        "\n";
+    string += "*** *** 2: " +
+        (this.swIn[2] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwInEnable(2)) ? "Set to Program" : "") +
+        "\n";
+    string += "*** *** 3: " +
+        (this.swIn[3] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwInEnable(3)) ? "Set to Program" : "") +
+        "\n";
     string += "*** Output Switch:\n";
-    string += "*** *** 0: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(0)) ? "Set to Program" : "") + "\n";
-    string += "*** *** 1: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(1)) ? "Set to Program" : "") + "\n";
-    string += "*** *** 2: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(2)) ? "Set to Program" : "") + "\n";
-    string += "*** *** 3: " + (this.swOut[0] & ioSwitchMask).toString() + " " + ((this.getProgramSwOutEnable(3)) ? "Set to Program" : "") + "\n";
+    string += "*** *** 0: " +
+        (this.swOut[0] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwOutEnable(0)) ? "Set to Program" : "") +
+        "\n";
+    string += "*** *** 1: " +
+        (this.swOut[0] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwOutEnable(1)) ? "Set to Program" : "") +
+        "\n";
+    string += "*** *** 2: " +
+        (this.swOut[0] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwOutEnable(2)) ? "Set to Program" : "") +
+        "\n";
+    string += "*** *** 3: " +
+        (this.swOut[0] & ioSwitchMask).toString() +
+        " " +
+        ((this.getProgramSwOutEnable(3)) ? "Set to Program" : "") +
+        "\n";
     string += "Short Name: " + this.shortName + "\n";
     string += "Long Name: " + this.longName + "\n";
     string += "Video Switch: " + this.swVideo.toString() + "\n";
@@ -1268,20 +1489,19 @@ class ArtnetAddressPacket implements ArtnetPacket{
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetIpProgPacket implements ArtnetPacket{
+class ArtnetIpProgPacket implements ArtnetPacket {
   static const type = "Artnet Ip Prog Packet";
   static const size = 34;
   static const opCode = 0xF800;
@@ -1319,13 +1539,12 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   static const commandProgramSubnetMask = 0x02;
   static const commandProgramPortMask = 0x01;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetIpProgPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetIpProgPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1351,22 +1570,29 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   set command(int value) => this.packet.setUint8(commandIndex, value);
 
   bool get commandProgrammingEnable => ((this.command & commandProgrammingEnableMask) != 0x00);
-  set commandProgrammingEnable(bool value) => (value) ? this.command |= commandProgrammingEnableMask : this.command &= ~commandProgrammingEnableMask;
+  set commandProgrammingEnable(bool value) =>
+      (value) ? this.command |= commandProgrammingEnableMask : this.command &= ~commandProgrammingEnableMask;
 
   bool get commandDHCPEnable => ((this.command & commandDHCPEnableMask) != 0x00);
-  set commandDHCPEnable(bool value) => (value) ? this.command |= commandDHCPEnableMask : this.command &= ~commandDHCPEnableMask;
+  set commandDHCPEnable(bool value) =>
+      (value) ? this.command |= commandDHCPEnableMask : this.command &= ~commandDHCPEnableMask;
 
   bool get commandResetIpSubnetPortToDefault => ((this.command & commandResetIpSubnetPortToDefaultMask) != 0x00);
-  set commandResetIpSubnetPortToDefault(bool value) => (value) ? this.command |= commandResetIpSubnetPortToDefaultMask : this.command &= ~commandResetIpSubnetPortToDefaultMask;
+  set commandResetIpSubnetPortToDefault(bool value) => (value)
+      ? this.command |= commandResetIpSubnetPortToDefaultMask
+      : this.command &= ~commandResetIpSubnetPortToDefaultMask;
 
   bool get commandProgramIp => ((this.command & commandProgramIpMask) != 0x00);
-  set commandProgramIp(bool value) => (value) ? this.command |= commandProgramIpMask : this.command &= ~commandProgramIpMask;
+  set commandProgramIp(bool value) =>
+      (value) ? this.command |= commandProgramIpMask : this.command &= ~commandProgramIpMask;
 
   bool get commandProgramSubnet => ((this.command & commandProgramSubnetMask) != 0x00);
-  set commandProgramSubnet(bool value) => (value) ? this.command |= commandProgramSubnetMask : this.command &= ~commandProgramSubnetMask;
+  set commandProgramSubnet(bool value) =>
+      (value) ? this.command |= commandProgramSubnetMask : this.command &= ~commandProgramSubnetMask;
 
   bool get commandProgramPort => ((this.command & commandProgramPortMask) != 0x00);
-  set commandProgramPort(bool value) => (value) ? this.command |= commandProgramPortMask : this.command &= ~commandProgramPortMask;
+  set commandProgramPort(bool value) =>
+      (value) ? this.command |= commandProgramPortMask : this.command &= ~commandProgramPortMask;
 
   int get progIpHi => this.packet.getUint8(progIpHiIndex);
   set progIpHi(int value) => this.packet.setUint8(progIpHiIndex, value);
@@ -1381,10 +1607,10 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   set progIpLo(int value) => this.packet.setUint8(progIpLoIndex, value);
 
   List<int> get progIp => this.packet.buffer.asUint8List(progIpHiIndex, progIpSize);
-  set ip(List<int> value){
-    for(var i = 0; i < progIpSize; i++){
-      if(value.length <= i){
-        this.packet.setUint8(progIpHiIndex + i, 0);    
+  set ip(List<int> value) {
+    for (var i = 0; i < progIpSize; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(progIpHiIndex + i, 0);
       } else {
         this.packet.setUint8(progIpHiIndex + i, value[i]);
       }
@@ -1404,10 +1630,10 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   set progSmLo(int value) => this.packet.setUint8(progSmLoIndex, value);
 
   List<int> get progSm => this.packet.buffer.asUint8List(progSmHiIndex, progSubnetSize);
-  set progSm(List<int> value){
-    for(var i = 0; i < progSubnetSize; i++){
-      if(value.length <= i){
-        this.packet.setUint8(progSmHiIndex + i, 0);    
+  set progSm(List<int> value) {
+    for (var i = 0; i < progSubnetSize; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(progSmHiIndex + i, 0);
       } else {
         this.packet.setUint8(progSmHiIndex + i, value[i]);
       }
@@ -1421,7 +1647,7 @@ class ArtnetIpProgPacket implements ArtnetPacket{
   set progPortLo(int value) => this.packet.setUint8(progPortLoIndex, value);
 
   int get progPort => this.packet.getUint16(progPortHiIndex);
-  set progPort(int value) =>this.packet.setUint16(progPortHiIndex, value);
+  set progPort(int value) => this.packet.setUint16(progPortHiIndex, value);
 
   List<int> get udpPacket => this.packet.buffer.asUint8List();
 
@@ -1434,30 +1660,47 @@ class ArtnetIpProgPacket implements ArtnetPacket{
     string += "Command: \n";
     string += "*** Programming: " + ((this.commandProgrammingEnable) ? "Enabled" : "Disabled") + "\n";
     string += "*** DHCP: " + ((this.commandDHCPEnable) ? "Enabled" : "Disabled") + "\n";
-    string += "*** Node is set to " + ((this.commandResetIpSubnetPortToDefault) ? "reset " : "NOT reset ") + "ip, netmask and port back to default\n";
+    string += "*** Node is set to " +
+        ((this.commandResetIpSubnetPortToDefault) ? "reset " : "NOT reset ") +
+        "ip, netmask and port back to default\n";
     string += "*** Node is set to " + ((this.commandProgramIp) ? "program " : "NOT program ") + " the ip\n";
     string += "*** Node is set to " + ((this.commandProgramSubnet) ? "program " : "NOT program ") + " the subnet\n";
     string += "*** Node is set to " + ((this.commandProgramPort) ? "program " : "NOT program ") + " the port\n";
-    string += "Ip to be Programmed: " + this.progIp[0].toString() + "." + this.progIp[1].toString() + "." + this.progIp[2].toString() + "." + this.progIp[3].toString() + "\n";
-    string += "Subnet to be Programmed: " + this.progSm[0].toString() + "." + this.progSm[1].toString() + "." + this.progSm[2].toString() + "." + this.progSm[3].toString() + "\n";
+    string += "Ip to be Programmed: " +
+        this.progIp[0].toString() +
+        "." +
+        this.progIp[1].toString() +
+        "." +
+        this.progIp[2].toString() +
+        "." +
+        this.progIp[3].toString() +
+        "\n";
+    string += "Subnet to be Programmed: " +
+        this.progSm[0].toString() +
+        "." +
+        this.progSm[1].toString() +
+        "." +
+        this.progSm[2].toString() +
+        "." +
+        this.progSm[3].toString() +
+        "\n";
     string += "Port to be Programmed: " + this.progPort.toString() + "\n";
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetIpProgReplyPacket implements ArtnetPacket{
+class ArtnetIpProgReplyPacket implements ArtnetPacket {
   static const type = "Artnet Ip Prog Reply Packet";
   static const size = 34;
   static const opCode = 0xF900;
@@ -1490,13 +1733,12 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
   /* Masks */
   static const statusDHCPEnabledMask = 0x40;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetIpProgReplyPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetIpProgReplyPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1531,10 +1773,10 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
   set progIpLo(int value) => this.packet.setUint8(progIpLoIndex, value);
 
   List<int> get progIp => this.packet.buffer.asUint8List(progIpHiIndex, progIpSize);
-  set ip(List<int> value){
-    for(var i = 0; i < progIpSize; i++){
-      if(value.length <= i){
-        this.packet.setUint8(progIpHiIndex + i, 0);    
+  set ip(List<int> value) {
+    for (var i = 0; i < progIpSize; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(progIpHiIndex + i, 0);
       } else {
         this.packet.setUint8(progIpHiIndex + i, value[i]);
       }
@@ -1554,10 +1796,10 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
   set progSmLo(int value) => this.packet.setUint8(progSmLoIndex, value);
 
   List<int> get progSm => this.packet.buffer.asUint8List(progSmHiIndex, progSubnetSize);
-  set progSm(List<int> value){
-    for(var i = 0; i < progSubnetSize; i++){
-      if(value.length <= i){
-        this.packet.setUint8(progSmHiIndex + i, 0);    
+  set progSm(List<int> value) {
+    for (var i = 0; i < progSubnetSize; i++) {
+      if (value.length <= i) {
+        this.packet.setUint8(progSmHiIndex + i, 0);
       } else {
         this.packet.setUint8(progSmHiIndex + i, value[i]);
       }
@@ -1571,7 +1813,7 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
   set progPortLo(int value) => this.packet.setUint8(progPortLoIndex, value);
 
   int get progPort => this.packet.getUint16(progPortHiIndex);
-  set progPort(int value) =>this.packet.setUint16(progPortHiIndex, value);
+  set progPort(int value) => this.packet.setUint16(progPortHiIndex, value);
 
   int get status => this.packet.getUint8(statusIndex);
   set status(int value) => this.packet.setUint8(statusIndex, value);
@@ -1587,28 +1829,43 @@ class ArtnetIpProgReplyPacket implements ArtnetPacket{
     string += "Id: " + String.fromCharCodes(this.packet.buffer.asUint8List(0, 8)) + "\n";
     string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
-    string += "Node Ip: " + this.progIp[0].toString() + "." + this.progIp[1].toString() + "." + this.progIp[2].toString() + "." + this.progIp[3].toString() + "\n";
-    string += "Node Subnet: " + this.progSm[0].toString() + "." + this.progSm[1].toString() + "." + this.progSm[2].toString() + "." + this.progSm[3].toString() + "\n";
+    string += "Node Ip: " +
+        this.progIp[0].toString() +
+        "." +
+        this.progIp[1].toString() +
+        "." +
+        this.progIp[2].toString() +
+        "." +
+        this.progIp[3].toString() +
+        "\n";
+    string += "Node Subnet: " +
+        this.progSm[0].toString() +
+        "." +
+        this.progSm[1].toString() +
+        "." +
+        this.progSm[2].toString() +
+        "." +
+        this.progSm[3].toString() +
+        "\n";
     string += "Node Port: " + this.progPort.toString() + "\n";
     string += "Node Status: 0x" + this.status.toString() + "\n";
     string += "*** DHCP Enable: " + ((this.dhcpEnabled) ? "Enabled" : "Disabled") + "\n";
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetCommandPacket implements ArtnetPacket{
+class ArtnetCommandPacket implements ArtnetPacket {
   static const type = "Artnet Command Packet";
   static const size = 16;
   static const opCode = 0x2400;
@@ -1625,14 +1882,12 @@ class ArtnetCommandPacket implements ArtnetPacket{
   static const lengthLoIndex = lengthHiIndex + 1;
   static const dataIndex = lengthLoIndex + 1;
 
+  ByteData packet = ByteData(size);
 
-  ByteData packet;
-
-  ArtnetCommandPacket([List<int> packet, int dataLength = defaultDataLength]){
-    this.packet = new ByteData(size + dataLength);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetCommandPacket([List<int>? packet, int dataLength = defaultDataLength]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1664,7 +1919,7 @@ class ArtnetCommandPacket implements ArtnetPacket{
   set estaManHi(int value) => this.packet.setUint8(estaManHiIndex, value);
 
   int get estaMan => this.estaManHi << 8 | this.estaManLo;
-  set estaMan(int value){
+  set estaMan(int value) {
     this.estaManHi = value >> 8;
     this.estaManLo = value & 0xFF;
   }
@@ -1676,8 +1931,8 @@ class ArtnetCommandPacket implements ArtnetPacket{
   set lengthLo(int value) => this.packet.setUint8(lengthLoIndex, value);
 
   int get dataLength => this.packet.getUint16(lengthHiIndex);
-  set dataLength(int value){
-    if(value > defaultDataLength || value < 0){
+  set dataLength(int value) {
+    if (value > defaultDataLength || value < 0) {
       return;
     }
 
@@ -1685,9 +1940,9 @@ class ArtnetCommandPacket implements ArtnetPacket{
   }
 
   List<int> get data => this.packet.buffer.asUint8List(dataIndex, this.dataLength);
-  set data(List<int> value){
-    for(var i = 0; i < this.dataLength; i++){
-      if(value.length <= i){
+  set data(List<int> value) {
+    for (var i = 0; i < this.dataLength; i++) {
+      if (value.length <= i) {
         return;
       }
       this.data[i] = value[i];
@@ -1705,13 +1960,13 @@ class ArtnetCommandPacket implements ArtnetPacket{
     string += "ESTA Manufacturer Code: 0x" + this.estaMan.toRadixString(16) + "\n";
     string += "Data Length: " + this.dataLength.toString() + "\n";
     string += "Data:";
-    for(var i = 0; i < this.dataLength; i++){
-      if((i % 16) == 0){
-        string +="\n";
+    for (var i = 0; i < this.dataLength; i++) {
+      if ((i % 16) == 0) {
+        string += "\n";
       }
       String tempString = this.data[i].toRadixString(16);
-      if(tempString.length < 2) tempString = "0" + tempString;
-      while(tempString.length < 3){
+      if (tempString.length < 2) tempString = "0" + tempString;
+      while (tempString.length < 3) {
         tempString += " ";
       }
       string += tempString;
@@ -1720,20 +1975,19 @@ class ArtnetCommandPacket implements ArtnetPacket{
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size + dataLength; i++){
+    for (var i = 0; i < size + dataLength; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetSyncPacket implements ArtnetPacket{
+class ArtnetSyncPacket implements ArtnetPacket {
   static const type = "Artnet Sync Packet";
   static const size = 14;
   static const opCode = 0x5200;
@@ -1744,13 +1998,12 @@ class ArtnetSyncPacket implements ArtnetPacket{
   static const aux1Index = ArtnetProtVerLoIndex + 1;
   static const aux2Index = aux1Index + 1;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetSyncPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetSyncPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1783,20 +2036,19 @@ class ArtnetSyncPacket implements ArtnetPacket{
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetFirmwareMasterPacket implements ArtnetPacket{
+class ArtnetFirmwareMasterPacket implements ArtnetPacket {
   static const type = "Artnet Firmware Master Packet";
   static const size = 1064;
   static const opCode = 0xF200;
@@ -1827,13 +2079,12 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
   static const blockTypeOptionUbeaCont = 0x04;
   static const blockTypeOptionUbeaLast = 0x05;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetFirmwareMasterPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetFirmwareMasterPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1877,9 +2128,9 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
   set firmwareLength(int value) => this.packet.setUint64(firmwareLength3Index, value);
 
   List<int> get data => this.packet.buffer.asUint16List(dataIndex, dataSize);
-  set data(List<int> value){
-    for(var i = 0; i < dataSize; i++){
-      if(value.length <= i){
+  set data(List<int> value) {
+    for (var i = 0; i < dataSize; i++) {
+      if (value.length <= i) {
         return;
       }
       this.packet.setUint16(dataIndex, value[i]);
@@ -1895,25 +2146,39 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
     string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Block Type: ";
-    switch(this.blockType){
-      case blockTypeOptionFirmFirst: string += "First Firmware Block\n"; break;
-      case blockTypeOptionFirmFirst: string += "Firmware Block " + this.blockId.toString() + "\n"; break;
-      case blockTypeOptionFirmFirst: string += "Last Firmware Block\n"; break;
-      case blockTypeOptionFirmFirst: string += "First UBEA Block\n"; break;
-      case blockTypeOptionFirmFirst: string += "UBEA Block " + this.blockId.toString() + "\n"; break;
-      case blockTypeOptionFirmFirst: string += "Last UBEA Block\n"; break;
-      default: string += "Unkown Type\n"; break;
+    switch (this.blockType) {
+      case blockTypeOptionFirmFirst:
+        string += "First Firmware Block\n";
+        break;
+      case blockTypeOptionFirmFirst:
+        string += "Firmware Block " + this.blockId.toString() + "\n";
+        break;
+      case blockTypeOptionFirmFirst:
+        string += "Last Firmware Block\n";
+        break;
+      case blockTypeOptionFirmFirst:
+        string += "First UBEA Block\n";
+        break;
+      case blockTypeOptionFirmFirst:
+        string += "UBEA Block " + this.blockId.toString() + "\n";
+        break;
+      case blockTypeOptionFirmFirst:
+        string += "Last UBEA Block\n";
+        break;
+      default:
+        string += "Unkown Type\n";
+        break;
     }
     string += "Block Id: " + this.blockId.toString() + "\n";
     string += "Firmware Length (words - Int16): " + this.firmwareLength.toString() + "\n";
     string += "Data:";
-    for(var i = 0; i < dataSize; i++){
-      if((i % 16) == 0){
-        string +="\n";
+    for (var i = 0; i < dataSize; i++) {
+      if ((i % 16) == 0) {
+        string += "\n";
       }
       String tempString = this.data[i].toRadixString(16);
-      if(tempString.length < 2) tempString = "0" + tempString;
-      while(tempString.length < 3){
+      if (tempString.length < 2) tempString = "0" + tempString;
+      while (tempString.length < 3) {
         tempString += " ";
       }
       string += tempString;
@@ -1922,20 +2187,19 @@ class ArtnetFirmwareMasterPacket implements ArtnetPacket{
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetFirmwareReplyPacket implements ArtnetPacket{
+class ArtnetFirmwareReplyPacket implements ArtnetPacket {
   static const type = "Artnet Firmware Reply Packet";
   static const size = 36;
   static const opCode = 0xF300;
@@ -1956,13 +2220,12 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
   static const blockTypeOptionFirmAllGood = 0x01;
   static const blockTypeOptionFirmFail = 0xFF;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetFirmwareReplyPacket([List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetFirmwareReplyPacket([List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -1996,29 +2259,36 @@ class ArtnetFirmwareReplyPacket implements ArtnetPacket{
     string += "Opcode: 0x" + this.packet.getUint16(ArtnetOpCodeIndex).toRadixString(16) + "\n";
     string += "Protocol Version: " + this.ArtnetProtVersion.toString() + "\n";
     string += "Block Type: ";
-    switch(this.blockType){
-      case blockTypeOptionFirmBlockGood: string += "Last block received successfully\n"; break;
-      case blockTypeOptionFirmAllGood: string += "All firmware blocks received successfully\n"; break;
-      case blockTypeOptionFirmFail: string += "Firmware block failure\n"; break;
-      default: string += "Unkown Type\n"; break;
+    switch (this.blockType) {
+      case blockTypeOptionFirmBlockGood:
+        string += "Last block received successfully\n";
+        break;
+      case blockTypeOptionFirmAllGood:
+        string += "All firmware blocks received successfully\n";
+        break;
+      case blockTypeOptionFirmFail:
+        string += "Firmware block failure\n";
+        break;
+      default:
+        string += "Unkown Type\n";
+        break;
     }
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
 
-class ArtnetBeepBeepPacket implements ArtnetPacket{
+class ArtnetBeepBeepPacket implements ArtnetPacket {
   static const type = "Beep Beep";
   static const size = 15;
   static const opCode = 0x6996;
@@ -2026,13 +2296,12 @@ class ArtnetBeepBeepPacket implements ArtnetPacket{
   /* Indexes */
   static const uuidIndex = ArtnetOpCodeIndex + 3;
 
-  ByteData packet;
+  ByteData packet = ByteData(size);
 
-  ArtnetBeepBeepPacket([int uuid, List<int> packet]){
-    this.packet = new ByteData(size);
-    if(packet != null){
-      for(var i = 0; i < size; i++){
-        if(packet.length <= i) return;
+  ArtnetBeepBeepPacket([int? uuid, List<int>? packet]) {
+    if (packet != null) {
+      for (var i = 0; i < size; i++) {
+        if (packet.length <= i) return;
         this.packet.setUint8(i, packet[i]);
       }
       return;
@@ -2056,15 +2325,14 @@ class ArtnetBeepBeepPacket implements ArtnetPacket{
     return string;
   }
 
-  String toHexString(){
+  String toHexString() {
     String string = "";
     String tempString = "";
-    for(var i = 0; i < size; i++){
+    for (var i = 0; i < size; i++) {
       tempString = this.udpPacket[i].toRadixString(16).toUpperCase();
-      if(tempString.length < 2) tempString = "0" + tempString;
+      if (tempString.length < 2) tempString = "0" + tempString;
       string += tempString;
     }
     return string;
   }
-
 }
