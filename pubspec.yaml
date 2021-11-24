@@ -1,11 +1,10 @@
 name: d_artnet_4
 description: An artnet packet builder
-version: 0.1.2
-author: Christian Krueger <christian@blizzardpro.com>
+version: 0.1.3
 homepage: https://github.com/TheOnlyCaky/d_artnet
 
 environment:
-  sdk: '>=1.19.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 
 
  
